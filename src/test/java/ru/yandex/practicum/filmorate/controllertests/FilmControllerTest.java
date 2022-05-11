@@ -29,8 +29,8 @@ public class FilmControllerTest {
         controller.add(film1);
         assertEquals(1L, film.getId());
         assertEquals(2L, film1.getId());
-        assertTrue(controller.getItems().containsValue(film));
-        assertTrue(controller.getItems().containsValue(film1));
+        assertTrue(controller.getFilms().containsValue(film));
+        assertTrue(controller.getFilms().containsValue(film1));
     }
 
     @Test
@@ -39,6 +39,7 @@ public class FilmControllerTest {
                 LocalDate.of(2022, 3, 1), 130);
         ValidationException e = assertThrows(ValidationException.class, () -> controller.add(emptyNameFilm));
         assertEquals("Название не должно быть пустым", e.getMessage());
+        assertTrue(controller.getFilms().isEmpty());
     }
 
     @Test
@@ -78,7 +79,7 @@ public class FilmControllerTest {
         assertEquals(1L, film.getId());
         controller.update(film1);
         assertEquals(1L, film1.getId());
-        assertFalse(controller.getItems().containsValue(film));
-        assertTrue(controller.getItems().containsValue(film1));
+        assertFalse(controller.getFilms().containsValue(film));
+        assertTrue(controller.getFilms().containsValue(film1));
     }
 }

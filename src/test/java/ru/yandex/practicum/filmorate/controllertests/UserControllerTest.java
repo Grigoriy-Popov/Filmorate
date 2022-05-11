@@ -30,8 +30,8 @@ public class UserControllerTest {
         controller.add(user1);
         assertEquals(1L, user.getId());
         assertEquals(2L, user1.getId());
-        assertTrue(controller.getItems().containsValue(user));
-        assertTrue(controller.getItems().containsValue(user));
+        assertTrue(controller.getUsers().containsValue(user));
+        assertTrue(controller.getUsers().containsValue(user));
     }
 
     @Test
@@ -85,7 +85,7 @@ public class UserControllerTest {
         assertEquals(1L, user.getId());
         controller.update(user1);
         assertEquals(1L, user1.getId());
-        assertFalse(controller.getItems().containsValue(user));
-        assertTrue(controller.getItems().containsValue(user1));
+        assertFalse(controller.getUsers().containsValue(user));
+        assertTrue(controller.getUsers().containsValue(user1));
     }
 }
