@@ -6,10 +6,7 @@ import ru.yandex.practicum.filmorate.exceptions.UserAlreadyExistsException;
 import ru.yandex.practicum.filmorate.exceptions.UserNotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Slf4j
 @Component
@@ -17,11 +14,8 @@ public class InMemoryUserStorage implements UserStorage {
     private Map<Long, User> users = new HashMap<>();
     private Long id = 0L;
 
-    public User getUserById(Long id) throws UserNotFoundException {
-        if (!users.containsKey(id)) {
-            throw new UserNotFoundException(String.format("Пользователя с id %d не найдено", id));
-        }
-        return users.get(id);
+    public Optional<User> getUserById(Long id) {
+        return Optional.ofNullable(users.get(id));
     }
 
     public User addUser(User user) {
