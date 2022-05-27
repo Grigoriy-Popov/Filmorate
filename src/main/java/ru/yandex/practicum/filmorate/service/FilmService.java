@@ -26,24 +26,19 @@ public class FilmService {
         this.filmStorage = inMemoryFilmStorage;
     }
 
-    public Film getFilmById(Long id) {
+    public Film getFilmByIdOrThrowException(Long id) {
         return filmStorage.getFilmById(id)
                 .orElseThrow(() -> new FilmNotFoundException(String.format("Фильм с id %d не найден", id)));
     }
 
     public Film addFilm(Film film) {
-        if (!validate(film)) {
-            log.info("Некорректная валидация, дата релиза ранее 28.12.1895");
-            throw new ValidationException("Дата релиза должна быть не ранее 28 декабря 1895 года");
-        }
+        validateFilmOrThrowException(film);
         return filmStorage.addFilm(film);
     }
 
     public Film updateFilm(Film film) {
-        if (!validate(film)) {
-            log.info("Неуспешная валидация, дата релиза ранее 28.12.1895");
-            throw new ValidationException("Дата релиза должна быть не ранее 28 декабря 1895 года");
-        }
+        validateFilmOrThrowException(film);
+        getFilmByIdOrThrowException(film.getId());
         return filmStorage.updateFilm(film);
     }
 
@@ -51,19 +46,22 @@ public class FilmService {
         return filmStorage.getAllFilms();
     }
 
-    public boolean validate(Film film) {
-        return film.getReleaseDate().isAfter(CINEMA_BIRTHDAY);
+    public void validateFilmOrThrowException(Film film) {
+        if (!film.getReleaseDate().isAfter(CINEMA_BIRTHDAY)) {
+            log.info("Некорректная валидация, дата релиза ранее 28.12.1895");
+            throw new ValidationException("Дата релиза должна быть не ранее 28 декабря 1895 года");
+        }
     }
 
     public void addLike(Long filmId, Long userId) {
-        getFilmById(filmId).getUsersLikes().add(userId);
+        getFilmByIdOrThrowException(filmId).getUsersLikes().add(userId);
     }
 
     public void deleteLike(Long filmId, Long userId) {
-        if (!getFilmById(filmId).getUsersLikes().contains(userId)) {
+        if (!getFilmByIdOrThrowException(filmId).getUsersLikes().contains(userId)) {
             throw new UserNotFoundException("Этот пользователь не ставил лайк на фильм");
         }
-        getFilmById(filmId).getUsersLikes().remove(userId);
+        getFilmByIdOrThrowException(filmId).getUsersLikes().remove(userId);
     }
 
     public List<Film> getMostLikedFilms(Integer limit) {

@@ -25,7 +25,7 @@ public class UserService {
         this.userStorage = inMemoryUserStorage;
     }
 
-    public User getUserById(Long id) {
+    public User getUserByIdOrThrowException(Long id) {
         return userStorage.getUserById(id)
                 .orElseThrow(() -> new UserNotFoundException(String.format("Пользователя с id %d не найдено", id)));
     }
@@ -35,6 +35,7 @@ public class UserService {
     }
 
     public User updateUser(User user) {
+        getUserByIdOrThrowException(user.getId());
         return userStorage.updateUser(user);
     }
 
@@ -43,8 +44,8 @@ public class UserService {
     }
 
     public void addFriend(Long userId, Long friendId) {
-        User user = getUserById(userId);
-        User friend = getUserById(friendId);
+        User user = getUserByIdOrThrowException(userId);
+        User friend = getUserByIdOrThrowException(friendId);
         if (user.getFriends().contains(friendId)) {
             throw new UserAlreadyExistsException(String.format("Пользователь с id %d уже в друзьях", friendId));
         }
@@ -55,8 +56,8 @@ public class UserService {
     }
 
     public void deleteFriend(Long userId, Long friendId) {
-        User user = getUserById(userId);
-        User friend = getUserById(friendId);
+        User user = getUserByIdOrThrowException(userId);
+        User friend = getUserByIdOrThrowException(friendId);
         if (!user.getFriends().contains(friendId)) {
             throw new UserNotFoundException(String.format("Пользователя с id %d нет в друзьях", friendId));
         }
@@ -67,24 +68,24 @@ public class UserService {
     }
 
     public List<User> getUsersFriends(Long userId) {
-        User user = getUserById(userId);
+        User user = getUserByIdOrThrowException(userId);
         List<User> friends = new ArrayList<>();
         for (Long friendId : user.getFriends()) {
-            friends.add(getUserById(friendId));
+            friends.add(getUserByIdOrThrowException(friendId));
         }
         log.info("По запросу /GET возвращён список друзей пользоветля {}", user.getName());
         return friends;
     }
 
     public List<User> getCommonFriends(Long firstUserId, Long secondUserId) {
-        Set<Long> firstUsersFriends = getUserById(firstUserId).getFriends();
-        Set<Long> secondUsersFriends = getUserById(secondUserId).getFriends();
+        Set<Long> firstUsersFriends = getUserByIdOrThrowException(firstUserId).getFriends();
+        Set<Long> secondUsersFriends = getUserByIdOrThrowException(secondUserId).getFriends();
         List<Long> commonFriendsIds = firstUsersFriends.stream().filter(secondUsersFriends::contains)
                 .collect(Collectors.toList());
         List<User> commonFriends = new ArrayList<>();
         if (!commonFriendsIds.isEmpty()) {
             for (Long id : commonFriendsIds) {
-                commonFriends.add(getUserById(id));
+                commonFriends.add(getUserByIdOrThrowException(id));
             }
         }
         return commonFriends;

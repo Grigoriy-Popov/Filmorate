@@ -36,7 +36,7 @@ public class UserController {
 
     @GetMapping("/{id}")
     public User getUser(@PathVariable(value = "id") Long userId) {
-        return userService.getUserById(userId);
+        return userService.getUserByIdOrThrowException(userId);
     }
 
     @PutMapping("/{id}/friends/{friendId}")

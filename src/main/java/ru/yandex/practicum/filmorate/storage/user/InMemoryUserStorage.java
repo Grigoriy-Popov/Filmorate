@@ -19,9 +19,6 @@ public class InMemoryUserStorage implements UserStorage {
     }
 
     public User addUser(User user) {
-        if (users.containsKey(user.getId())) {
-            throw new UserAlreadyExistsException("Такой пользователь уже существует");
-        }
         if (user.getName().isEmpty()) {
             user.setName(user.getLogin());
         }
@@ -32,9 +29,6 @@ public class InMemoryUserStorage implements UserStorage {
     }
 
     public User updateUser(User user) {
-        if (!users.containsKey(user.getId())) {
-            throw new UserNotFoundException("Пользователя с id " + user.getId() + " не найдено");
-        }
         users.put(user.getId(), user);
         log.info("По запросу /PUT обновлён пользователь {}", user.getName());
         return user;
