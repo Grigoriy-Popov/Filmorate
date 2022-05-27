@@ -19,9 +19,6 @@ public class InMemoryUserStorage implements UserStorage {
     }
 
     public User addUser(User user) {
-        if (user.getName().isEmpty()) {
-            user.setName(user.getLogin());
-        }
         user.setId(++id);
         users.put(id, user);
         log.info("По запросу /POST добавлен пользователь {}", user.getName());

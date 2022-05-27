@@ -31,12 +31,20 @@ public class UserService {
     }
 
     public User addUser(User user) {
+        validateUser(user);
         return userStorage.addUser(user);
     }
 
     public User updateUser(User user) {
+        validateUser(user);
         getUserByIdOrThrowException(user.getId());
         return userStorage.updateUser(user);
+    }
+
+    public void validateUser(User user) {
+        if (user.getName().isEmpty()) {
+            user.setName(user.getLogin());
+        }
     }
 
     public List<User> getAllUsers() {
