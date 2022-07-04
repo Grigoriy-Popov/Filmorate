@@ -46,8 +46,8 @@ public class FilmController {
 
     @GetMapping("/popular")
     public List<Film> getMostLikedFilms(
-            @RequestParam(value = "count", required = false, defaultValue = "10") int count) {
-        return filmService.getMostLikedFilms(count);
+            @RequestParam(value = "count", required = false, defaultValue = "10") int limit) {
+        return filmService.getMostLikedFilms(limit);
     }
 
     @DeleteMapping("{id}/like/{userId}")

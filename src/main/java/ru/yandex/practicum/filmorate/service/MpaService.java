@@ -25,6 +25,7 @@ public class MpaService {
         if (mpaId < 1) {
             throw new FilmNotFoundException("Некорректный id");
         }
-        return mpaStorage.getRatingById(mpaId);
+        return mpaStorage.getRatingById(mpaId)
+                .orElseThrow(() -> new FilmNotFoundException(String.format("MPA с id %d не найдено", mpaId)));
     }
 }

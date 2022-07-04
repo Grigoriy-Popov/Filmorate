@@ -2,13 +2,13 @@ package ru.yandex.practicum.filmorate.storage;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.model.MpaRating;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Optional;
 
 @Component
 public class MpaStorage {
@@ -19,21 +19,18 @@ public class MpaStorage {
         this.jdbcTemplate = jdbcTemplate;
     }
 
-    public MpaRating getRatingById(int mpaRatingId) {
-        SqlRowSet mpaRows = jdbcTemplate.queryForRowSet("SELECT * FROM mpa_rating WHERE mpa_id = ?", mpaRatingId);
-        if (mpaRows.next()) {
-            return new MpaRating(mpaRows.getInt("mpa_id"), mpaRows.getString("name"));
-        } else {
-            return null;
-        }
+    public Optional<MpaRating> getRatingById(int mpaRatingId) {
+        MpaRating mpa = jdbcTemplate.queryForObject("SELECT * FROM mpa_rating WHERE mpa_id = ?",
+                this::makeMpa, mpaRatingId);
+        return Optional.ofNullable(mpa);
     }
 
     public List<MpaRating> getAllMpaRatings() {
         String sql = "SELECT * FROM mpa_rating";
-        return jdbcTemplate.query(sql, (rs, rowNum) -> makeMpa(rs));
+        return jdbcTemplate.query(sql, this::makeMpa);
     }
 
-    private MpaRating makeMpa(ResultSet rs) throws SQLException {
+    private MpaRating makeMpa(ResultSet rs, int rowNum) throws SQLException {
         return new MpaRating(rs.getInt("mpa_id"), rs.getString("name"));
     }
 }

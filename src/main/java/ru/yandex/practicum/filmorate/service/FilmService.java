@@ -27,7 +27,11 @@ public class FilmService {
     }
 
     public Film getFilmById(Long id) {
-        return filmStorage.getFilmById(id);
+        if (id < 0) {
+            throw new FilmNotFoundException("Некорретный id");
+        }
+        return filmStorage.getFilmById(id)
+                .orElseThrow(() -> new FilmNotFoundException(String.format("Фильма с id %d не найдено", id)));
     }
 
     public Film addFilm(Film film) {
@@ -62,7 +66,7 @@ public class FilmService {
         likeStorage.deleteLike(filmId, userId);
     }
 
-    public List<Film> getMostLikedFilms(int count) {
-        return filmStorage.getMostLikedFilms(count);
+    public List<Film> getMostLikedFilms(int limit) {
+        return filmStorage.getMostLikedFilms(limit);
     }
 }

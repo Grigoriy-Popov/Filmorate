@@ -21,10 +21,11 @@ public class GenreService {
         return genreStorage.getAllGenres();
     }
 
-    public Genre getGenreById(int id) {
-        if (id < 1) {
+    public Genre getGenreById(int genreId) {
+        if (genreId < 1) {
             throw new FilmNotFoundException("Некорректный id");
         }
-        return genreStorage.getGenreById(id);
+        return genreStorage.getGenreById(genreId)
+                .orElseThrow(() -> new FilmNotFoundException(String.format("Жанра с id %d не найдено", genreId)));
     }
 }

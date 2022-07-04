@@ -2,13 +2,13 @@ package ru.yandex.practicum.filmorate.storage;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.model.Genre;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Optional;
 
 @Component
 public class GenreStorage {
@@ -19,21 +19,18 @@ public class GenreStorage {
         this.jdbcTemplate = jdbcTemplate;
     }
 
-    public Genre getGenreById(int genreId) {
-        SqlRowSet genreRows = jdbcTemplate.queryForRowSet("SELECT * FROM genres WHERE genre_id = ?", genreId);
-        if (genreRows.next()) {
-            return new Genre(genreRows.getInt("genre_id"), genreRows.getString("name"));
-        }
-        return null;
+    public Optional<Genre> getGenreById(int genreId) {
+        Genre genre = jdbcTemplate.queryForObject("SELECT * FROM genres WHERE genre_id = ?",
+                this::makeGenre, genreId);
+        return Optional.ofNullable(genre);
     }
 
     public List<Genre> getAllGenres() {
         String sql = "SELECT * FROM genres";
-        List<Genre> genres = jdbcTemplate.query(sql, (rs, rowNum) -> makeGenre(rs));
-        return genres;
+        return jdbcTemplate.query(sql, this::makeGenre);
     }
 
-    private Genre makeGenre(ResultSet rs) throws SQLException {
+    private Genre makeGenre(ResultSet rs, int rowNum) throws SQLException {
         return new Genre(rs.getInt("genre_id"), rs.getString("name"));
     }
 }

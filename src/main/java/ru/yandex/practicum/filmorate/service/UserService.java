@@ -22,9 +22,12 @@ public class UserService {
         this.friendsStorage = friendsStorage;
     }
 
-    public User getUserByIdOrThrowException(Long id) {
-        return userStorage.getUserById(id)
-                .orElseThrow(() -> new UserNotFoundException(String.format("Пользователя с id %d не найдено", id)));
+    public User getUserByIdOrThrowException(Long userId) {
+        if (userId < 0) {
+            throw new UserNotFoundException("Некорретный id");
+        }
+        return userStorage.getUserById(userId)
+                .orElseThrow(() -> new UserNotFoundException(String.format("Пользователя с id %d не найдено", userId)));
     }
 
     public User addUser(User user) {
@@ -68,6 +71,9 @@ public class UserService {
     }
 
     public void validateUser(User user) {
+        if (user.getId() != null && user.getId() < 0) {
+            throw new UserNotFoundException("Некорретный id");
+        }
         if (user.getName().isEmpty()) {
             user.setName(user.getLogin());
         }

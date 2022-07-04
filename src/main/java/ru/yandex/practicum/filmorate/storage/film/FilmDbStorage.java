@@ -4,7 +4,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
-import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exceptions.FilmNotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
@@ -16,10 +15,7 @@ import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
-import java.util.TreeSet;
+import java.util.*;
 
 @Component
 public class FilmDbStorage implements FilmStorage {
@@ -80,34 +76,21 @@ public class FilmDbStorage implements FilmStorage {
     @Override
     public List<Film> getAllFilms() {
         String sql = "SELECT * FROM films JOIN mpa_rating ON films.mpa_id = mpa_rating.mpa_id";
-        return jdbcTemplate.query(sql, (rs, rowNum) -> makeFilm(rs));
+        return jdbcTemplate.query(sql, this::makeFilm);
     }
 
     @Override
-    public Film getFilmById(Long filmId) {
-        SqlRowSet filmRows = jdbcTemplate.queryForRowSet("SELECT * FROM films " +
-                "JOIN mpa_rating ON films.mpa_id = mpa_rating.mpa_id WHERE film_id = ?", filmId);
-        if (filmRows.next()) {
-            Film film = new Film(
-                    filmRows.getLong("film_id"),
-                    filmRows.getString("name"),
-                    filmRows.getString("description"),
-                    filmRows.getDate("release_Date").toLocalDate(),
-                    filmRows.getInt("duration"),
-                    new MpaRating(filmRows.getInt("mpa_id"), filmRows.getString(8))
-            );
-            setGenres(film);
-            setLikes(film);
-            return film;
-        }
-        throw new FilmNotFoundException("Фильм с таким id не найден");
+    public Optional<Film> getFilmById(Long filmId) {
+        String sql = "SELECT * FROM films JOIN mpa_rating ON films.mpa_id = mpa_rating.mpa_id WHERE film_id = ?";
+        Film film = jdbcTemplate.queryForObject(sql, this::makeFilm, filmId);
+        return Optional.ofNullable(film);
     }
 
     @Override
-    public List<Film> getMostLikedFilms(int count) {
+    public List<Film> getMostLikedFilms(int limit) {
         String sql = "SELECT * FROM films AS f JOIN likes AS l ON f.film_id = l.film_id GROUP BY l.film_id, l.user_id " +
-                "ORDER BY COUNT(l.user_id) DESC LIMIT " + count;
-        List<Film> films = jdbcTemplate.query(sql, (rs, rowNum) -> makeFilm(rs));
+                "ORDER BY COUNT(l.user_id) DESC LIMIT ?";
+        List<Film> films = jdbcTemplate.query(sql, this::makeFilm, limit);
         if (films.isEmpty()) {
             films.addAll(getAllFilms());
         }
@@ -119,7 +102,7 @@ public class FilmDbStorage implements FilmStorage {
         jdbcTemplate.update(sql1Query, filmId);
     }
 
-    private Film makeFilm(ResultSet rs) throws SQLException {
+    private Film makeFilm(ResultSet rs, int rowNum) throws SQLException {
         Film film = new Film(
                 rs.getLong("film_id"),
                 rs.getString("name"),
