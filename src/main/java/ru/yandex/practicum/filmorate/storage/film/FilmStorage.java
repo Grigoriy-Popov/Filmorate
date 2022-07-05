@@ -15,4 +15,6 @@ public interface FilmStorage {
     List<Film> getAllFilms();
 
     Optional<Film> getFilmById(Long id);
+
+    List<Film> getMostLikedFilms(int count);
 }
