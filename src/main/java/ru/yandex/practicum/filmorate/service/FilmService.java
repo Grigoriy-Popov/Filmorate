@@ -41,6 +41,9 @@ public class FilmService {
 
     public Film updateFilm(Film film) {
         validateFilmOrThrowException(film);
+        if (film.getId() < 1) {
+            throw new FilmNotFoundException("Некорректный id");
+        }
         return filmStorage.updateFilm(film);
     }
 

@@ -18,7 +18,6 @@ public class LikeStorage {
         jdbcTemplate.update(sqlQuery, userId, filmId);
     }
 
-
     public void deleteLike(Long filmId, Long userId) {
         String sqlQuery = "DELETE FROM likes WHERE user_id = ? AND film_id = ? ";
         jdbcTemplate.update(sqlQuery, userId, filmId);
