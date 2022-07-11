@@ -69,7 +69,7 @@ public class FilmService {
         likeStorage.deleteLike(filmId, userId);
     }
 
-    public List<Film> getMostLikedFilms(int limit) {
-        return filmStorage.getMostLikedFilms(limit);
+    public List<Film> getPopularFilms(int limit, Integer genre, Integer year) {
+        return filmStorage.getPopularFilms(limit, genre, year);
     }
 }
