@@ -14,6 +14,7 @@ import ru.yandex.practicum.filmorate.storage.GenreFilmStorage;
 import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.util.*;
 
 @Repository
@@ -77,14 +78,32 @@ public class FilmDbStorage implements FilmStorage {
     }
 
     @Override
-    public List<Film> getMostLikedFilms(int limit) {
-        String sql = "SELECT * FROM films AS f JOIN likes AS l ON f.film_id = l.film_id GROUP BY l.film_id, l.user_id " +
-                "ORDER BY COUNT(l.user_id) DESC LIMIT ?";
-        List<Film> films = jdbcTemplate.query(sql, this::makeFilm, limit);
-        if (films.isEmpty()) {
-            films.addAll(getAllFilms());
+    public List<Film> getPopularFilms(int limit, Integer genre, Integer year) {
+        if (genre == null && year == null) {
+            String sql = "SELECT * FROM films f LEFT JOIN likes l ON f.film_id = l.film_id " +
+                    "GROUP BY f.film_id, l.user_id ORDER BY COUNT(l.user_id) DESC LIMIT ?";
+            return jdbcTemplate.query(sql, this::makeFilm, limit);
+        } else if (genre != null && year == null) {
+            String sql = "SELECT * FROM films f LEFT JOIN likes l ON f.film_id = l.film_id " +
+                    "LEFT JOIN genre_film gf ON f.film_id = gf.film_id " +
+                    "WHERE gf.genre_id = ? " +
+                    "GROUP BY f.film_id, l.user_id, gf.genre_id " +
+                    "ORDER BY COUNT(l.user_id) DESC LIMIT ?";
+            return jdbcTemplate.query(sql, this::makeFilm, genre, limit);
+        } else if (genre == null && year != null) {
+            String sql = "SELECT * FROM films f LEFT JOIN likes l ON f.film_id = l.film_id " +
+                    "WHERE EXTRACT(YEAR FROM f.release_date::DATE) = ? " +
+                    "GROUP BY f.film_id, l.user_id " +
+                    "ORDER BY COUNT(l.user_id) DESC LIMIT ?";
+            return jdbcTemplate.query(sql, this::makeFilm, year, limit);
+        } else {
+            String sql = "SELECT * FROM films f LEFT JOIN likes l ON f.film_id = l.film_id " +
+                    "LEFT JOIN genre_film gf ON f.film_id = gf.film_id " +
+                    "WHERE gf.genre_id = ? AND EXTRACT(YEAR FROM f.release_date::DATE) = ? " +
+                    "GROUP BY f.film_id, l.user_id " +
+                    "ORDER BY COUNT(l.user_id) DESC LIMIT ?";
+            return jdbcTemplate.query(sql, this::makeFilm, genre, year, limit);
         }
-        return films;
     }
 
     public void deleteFilm(Long filmId) {
