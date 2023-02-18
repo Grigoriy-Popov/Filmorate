@@ -51,13 +51,6 @@ public class FilmService {
         return filmStorage.getAllFilms();
     }
 
-    public void validateFilmOrThrowException(Film film) {
-        if (!film.getReleaseDate().isAfter(CINEMA_BIRTHDAY)) {
-            log.info("Некорректная валидация, дата релиза ранее 28.12.1895");
-            throw new ValidationException("Дата релиза должна быть не ранее 28 декабря 1895 года");
-        }
-    }
-
     public void addLike(Long filmId, Long userId) {
         likeStorage.addLike(filmId, userId);
     }
@@ -71,5 +64,12 @@ public class FilmService {
 
     public List<Film> getPopularFilms(int limit, Integer genre, Integer year) {
         return filmStorage.getPopularFilms(limit, genre, year);
+    }
+
+    private void validateFilmOrThrowException(Film film) {
+        if (!film.getReleaseDate().isAfter(CINEMA_BIRTHDAY)) {
+            log.info("Некорректная валидация, дата релиза ранее 28.12.1895");
+            throw new ValidationException("Дата релиза должна быть не ранее 28 декабря 1895 года");
+        }
     }
 }

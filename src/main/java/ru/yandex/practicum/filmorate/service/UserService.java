@@ -50,7 +50,9 @@ public class UserService {
         if (userId < 1 || friendId < 1) {
             throw new UserNotFoundException("Некорретные id");
         }
-        friendsStorage.addFriend(userId,friendId);
+        getUserByIdOrThrowException(userId);
+        getUserByIdOrThrowException(friendId);
+        friendsStorage.addFriend(userId, friendId);
     }
 
     public void deleteFriend(Long userId, Long friendId) {

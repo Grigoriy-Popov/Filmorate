@@ -1,8 +1,11 @@
 package ru.yandex.practicum.filmorate.storage;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.model.MpaRating;
 
 import java.sql.ResultSet;
@@ -10,7 +13,8 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 
-@Component
+@Repository
+@Slf4j
 public class MpaStorage {
     private final JdbcTemplate jdbcTemplate;
 
@@ -20,9 +24,14 @@ public class MpaStorage {
     }
 
     public Optional<MpaRating> getRatingById(int mpaRatingId) {
-        MpaRating mpa = jdbcTemplate.queryForObject("SELECT * FROM mpa_rating WHERE mpa_id = ?",
-                this::makeMpa, mpaRatingId);
-        return Optional.ofNullable(mpa);
+        MpaRating mpaRating = null;
+        try {
+            mpaRating = jdbcTemplate.queryForObject("SELECT * FROM mpa_rating WHERE mpa_id = ?",
+                    this::makeMpa, mpaRatingId);
+        } catch (EmptyResultDataAccessException e) {
+            log.debug("MPA not found");
+        }
+        return Optional.ofNullable(mpaRating);
     }
 
     public List<MpaRating> getAllMpaRatings() {

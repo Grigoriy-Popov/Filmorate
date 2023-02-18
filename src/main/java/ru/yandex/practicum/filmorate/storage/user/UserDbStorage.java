@@ -3,9 +3,11 @@ package ru.yandex.practicum.filmorate.storage.user;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Repository;
+import ru.yandex.practicum.filmorate.exceptions.UserNotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.sql.ResultSet;
@@ -36,6 +38,8 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public User updateUser(User user) {
+        getUserById(user.getId())
+                .orElseThrow(() -> new UserNotFoundException("User with id not found"));
         String sqlQuery = "UPDATE users SET email = ?, login = ?, name = ?, birthday = ? WHERE user_id = ?";
         jdbcTemplate.update(sqlQuery, user.getEmail(), user.getLogin(), user.getName(),
                 user.getBirthday(), user.getId());
@@ -51,8 +55,12 @@ public class UserDbStorage implements UserStorage {
     @Override
     public Optional<User> getUserById(Long userId) {
         String sql = "SELECT * FROM users WHERE user_id = ?";
-        User user = jdbcTemplate.queryForObject(sql, this::makeUser, userId);
-        log.info("Найден пользователь: {} {}", user.getId(), user.getName());
+        User user = null;
+        try {
+            user = jdbcTemplate.queryForObject(sql, this::makeUser, userId);
+        } catch (EmptyResultDataAccessException e) {
+            log.debug("User with id {} not found", userId);
+        }
         return Optional.ofNullable(user);
     }
 
@@ -70,13 +78,13 @@ public class UserDbStorage implements UserStorage {
     }
 
     private User makeUser(ResultSet rs, int rowNum) throws SQLException {
-        User user = new User(
-                rs.getLong("user_id"),
-                rs.getString("email"),
-                rs.getString("login"),
-                rs.getString("name"),
-                rs.getDate("birthday").toLocalDate()
-        );
+        var user = User.builder()
+                .id(rs.getLong("user_id"))
+                .email(rs.getString("email"))
+                .login(rs.getString("login"))
+                .name(rs.getString("name"))
+                .birthday(rs.getDate("birthday").toLocalDate())
+                .build();
         setFriends(user);
         return user;
     }
@@ -84,9 +92,7 @@ public class UserDbStorage implements UserStorage {
     private User setFriends(User user) {
         String sql = "SELECT user_id FROM users WHERE user_id IN (SELECT friend_id FROM friends WHERE user_id = ?)";
         List<Long> users = jdbcTemplate.query(sql, (rs, rowNum) -> rs.getLong("user_id"), user.getId());
-        if (!users.isEmpty()) {
-            user.setFriends(new HashSet<>(users));
-        }
+        user.setFriends(users.isEmpty() ? new HashSet<>() : new HashSet<>(users));
         return user;
     }
 }

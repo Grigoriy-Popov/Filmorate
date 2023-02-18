@@ -1,5 +1,7 @@
 package ru.yandex.practicum.filmorate.model;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 
 import javax.validation.constraints.Email;
@@ -11,6 +13,8 @@ import java.util.Map;
 import java.util.Set;
 
 @Data
+@AllArgsConstructor
+@Builder
 public class User {
     private Long id;
     @Email
@@ -18,17 +22,9 @@ public class User {
     @NotBlank
     private String login;
     private String name;
-    @Past
+    @Past (message = "Birthday can't be in future")
     private LocalDate birthday;
     private Set<Long> friends;
-
-    public User(Long id, String email, String login, String name, LocalDate birthday) {
-        this.id = id;
-        this.email = email;
-        this.login = login;
-        this.name = name;
-        this.birthday = birthday;
-    }
 
     public Map<String, Object> toMap() {
         Map<String, Object> values = new HashMap<>();
