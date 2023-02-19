@@ -1,11 +1,11 @@
 package ru.yandex.practicum.filmorate.storage.user;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.exceptions.UserNotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
@@ -17,47 +17,50 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
+@RequiredArgsConstructor
 @Slf4j
-@Qualifier("userDbStorage")
 public class UserDbStorage implements UserStorage {
-    private final JdbcTemplate jdbcTemplate;
-
-    @Autowired
-    public UserDbStorage(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
-    }
+    private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
     @Override
-    public User addUser(User user) {
-        SimpleJdbcInsert simpleJdbcInsert = new SimpleJdbcInsert(jdbcTemplate)
-                .withTableName("users")
-                .usingGeneratedKeyColumns("user_id");
-        user.setId(simpleJdbcInsert.executeAndReturnKey(user.toMap()).longValue());
+    public User createUser(User user) {
+        String sql = "INSERT INTO users (email, login, name, birthday) VALUES (:email, :login, :name, :birthday)";
+        var parameterSource = new MapSqlParameterSource(user.toMap());
+        var holder = new GeneratedKeyHolder();
+        namedParameterJdbcTemplate.update(sql, parameterSource, holder);
+        user.setId(holder.getKey().longValue());
         return user;
     }
 
     @Override
-    public User updateUser(User user) {
+    public User editUser(User user) {
         getUserById(user.getId())
                 .orElseThrow(() -> new UserNotFoundException("User with id not found"));
-        String sqlQuery = "UPDATE users SET email = ?, login = ?, name = ?, birthday = ? WHERE user_id = ?";
-        jdbcTemplate.update(sqlQuery, user.getEmail(), user.getLogin(), user.getName(),
-                user.getBirthday(), user.getId());
+        String sql = "UPDATE users SET email = :email, login = :login, name = :name, birthday = :birthday " +
+                "WHERE user_id = :user_id";
+        var parameterSource = new MapSqlParameterSource()
+                .addValue("email", user.getEmail())
+                .addValue("login", user.getLogin())
+                .addValue("name", user.getName())
+                .addValue("birthday", user.getBirthday())
+                .addValue("user_id", user.getId());
+        namedParameterJdbcTemplate.update(sql, parameterSource);
         return user;
     }
 
     @Override
     public List<User> getAllUsers() {
         String sql = "SELECT * FROM users";
-        return jdbcTemplate.query(sql, this::makeUser);
+        return namedParameterJdbcTemplate.query(sql, this::makeUser);
     }
 
     @Override
     public Optional<User> getUserById(Long userId) {
-        String sql = "SELECT * FROM users WHERE user_id = ?";
+        String sql = "SELECT * FROM users WHERE user_id = :user_id";
         User user = null;
+        var parameterSource = new MapSqlParameterSource("user_id", userId);
         try {
-            user = jdbcTemplate.queryForObject(sql, this::makeUser, userId);
+            user = namedParameterJdbcTemplate.queryForObject(sql, parameterSource, this::makeUser);
         } catch (EmptyResultDataAccessException e) {
             log.debug("User with id {} not found", userId);
         }
@@ -66,15 +69,19 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public List<User> getFriends(Long userId) {
-        String sql = "SELECT * FROM users WHERE user_id IN (SELECT friend_id FROM friends WHERE user_id = ?)";
-        return jdbcTemplate.query(sql, this::makeUser, userId);
+        String sql = "SELECT * FROM users WHERE user_id IN (SELECT friend_id FROM friends WHERE user_id = :user_id)";
+        var parameterSource = new MapSqlParameterSource("user_id", userId);
+        return namedParameterJdbcTemplate.query(sql, parameterSource, this::makeUser);
     }
 
     @Override
     public List<User> getCommonFriends(Long user1Id, Long user2Id) {
-        String sql = "SELECT * FROM users WHERE user_id IN (SELECT friend_id FROM friends WHERE user_id = ?) " +
-                "AND user_id IN (SELECT friend_id FROM friends WHERE user_id = ?)";
-        return jdbcTemplate.query(sql, this::makeUser, user1Id, user2Id);
+        String sql = "SELECT * FROM users WHERE user_id IN (SELECT friend_id FROM friends WHERE user_id = :user1_id) " +
+                "AND user_id IN (SELECT friend_id FROM friends WHERE user_id = :user2_id)";
+        var parameterSource = new MapSqlParameterSource()
+                .addValue("user1_id", user1Id)
+                .addValue("user2_id", user2Id);
+        return namedParameterJdbcTemplate.query(sql, parameterSource, this::makeUser);
     }
 
     private User makeUser(ResultSet rs, int rowNum) throws SQLException {
@@ -89,10 +96,12 @@ public class UserDbStorage implements UserStorage {
         return user;
     }
 
-    private User setFriends(User user) {
-        String sql = "SELECT user_id FROM users WHERE user_id IN (SELECT friend_id FROM friends WHERE user_id = ?)";
-        List<Long> users = jdbcTemplate.query(sql, (rs, rowNum) -> rs.getLong("user_id"), user.getId());
+    private void setFriends(User user) {
+        String sql = "SELECT user_id FROM users" +
+                " WHERE user_id IN (SELECT friend_id FROM friends WHERE user_id = :user_id)";
+        var parameterSource = new MapSqlParameterSource("user_id", user.getId());
+        List<Long> users = namedParameterJdbcTemplate
+                .query(sql, parameterSource, (rs, rowNum) -> rs.getLong("user_id"));
         user.setFriends(users.isEmpty() ? new HashSet<>() : new HashSet<>(users));
-        return user;
     }
 }

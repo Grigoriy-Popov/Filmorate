@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.exceptions.FilmNotFoundException;
@@ -19,43 +18,40 @@ import java.sql.SQLException;
 import java.util.*;
 
 @Repository
-@Slf4j
 @RequiredArgsConstructor
+@Slf4j
 public class FilmDbStorage implements FilmStorage {
     private final JdbcTemplate jdbcTemplate;
     private final GenreFilmStorage genreFilmStorage;
 
     @Override
-    public Film addFilm(Film film) {
+    public Film createFilm(Film film) {
         var simpleJdbcInsert = new SimpleJdbcInsert(jdbcTemplate)
                 .withTableName("films")
                 .usingGeneratedKeyColumns("film_id");
         film.setId(simpleJdbcInsert.executeAndReturnKey(film.toMap()).longValue());
         if (film.getGenres() != null) {
             for (Genre genre : film.getGenres()) {
-                genreFilmStorage.put(genre.getId(), film.getId());
+                genreFilmStorage.addGenre(genre.getId(), film.getId());
             }
         }
         return film;
     }
 
     @Override
-    public Film updateFilm(Film film) {
+    public Film editFilm(Film film) {
         getFilmById(film.getId())
                 .orElseThrow(() -> new FilmNotFoundException("Film not found"));
-        String sqlQuery = "UPDATE films SET name = ?, description = ?, release_date = ?, duration = ?, mpa_id = ? " +
+        String sql = "UPDATE films SET name = ?, description = ?, release_date = ?, duration = ?, mpa_id = ? " +
                 "WHERE film_id = ?";
-        int testNumber = jdbcTemplate.update(sqlQuery, film.getName(), film.getDescription(),
+        jdbcTemplate.update(sql, film.getName(), film.getDescription(),
                 Date.valueOf(film.getReleaseDate()), film.getDuration(), film.getMpa().getId(), film.getId());
-        if (testNumber != 1) {
-            throw new FilmNotFoundException("Такого фильма не найдено");
-        }
         if (film.getGenres() != null) {
             genreFilmStorage.deleteGenresByFilm(film.getId());
             TreeSet<Genre> genresList = new TreeSet<>(Comparator.comparingInt(Genre::getId));
             genresList.addAll(film.getGenres());
             for (Genre genre : genresList) {
-                genreFilmStorage.put(genre.getId(), film.getId());
+                genreFilmStorage.addGenre(genre.getId(), film.getId());
             }
             film.setGenres(genresList);
         } else {
@@ -125,8 +121,8 @@ public class FilmDbStorage implements FilmStorage {
     }
 
     public void deleteFilm(Long filmId) {
-        String sql1Query = "DELETE FROM films WHERE film_id = ?";
-        jdbcTemplate.update(sql1Query, filmId);
+        String sql = "DELETE FROM films WHERE film_id = ?";
+        jdbcTemplate.update(sql, filmId);
     }
 
     private Film makeFilm(ResultSet rs, int rowNum) throws SQLException {
@@ -150,25 +146,17 @@ public class FilmDbStorage implements FilmStorage {
     private void setGenres(Film film) {
         String sql = "SELECT * FROM genres g JOIN genre_film gf ON g.genre_id = gf.genre_id " +
                 "WHERE gf.film_id = ? ORDER BY g.genre_id";
-        List<Genre> genres = jdbcTemplate.query(sql, (rs, rowNum) -> makeGenre(rs), film.getId());
-        if (!genres.isEmpty()) {
-            film.setGenres(new HashSet<>(genres));
-        } else {
-            film.setGenres(new HashSet<>());
-        }
+        List<Genre> genres = jdbcTemplate.query(sql, this::makeGenre, film.getId());
+        film.setGenres(genres.isEmpty() ? new HashSet<>() : new HashSet<>(genres));
     }
 
     private void setLikes(Film film) {
         String sql = "SELECT user_id FROM likes WHERE film_id = ?";
         List<Long> likes = jdbcTemplate.query(sql, (rs, rowNum) -> rs.getLong("user_id"), film.getId());
-        if (!likes.isEmpty()) {
-            film.setUsersLikes(new HashSet<>(likes));
-        } else {
-            film.setUsersLikes(new HashSet<>());
-        }
+        film.setUsersLikes(likes.isEmpty() ? new HashSet<>() : new HashSet<>(likes));
     }
 
-    private Genre makeGenre(ResultSet rs) throws SQLException {
+    private Genre makeGenre(ResultSet rs, int rowNum) throws SQLException {
         return new Genre(rs.getInt("genre_id"), rs.getString("name"));
     }
 }

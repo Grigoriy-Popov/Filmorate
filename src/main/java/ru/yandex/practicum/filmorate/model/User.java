@@ -17,13 +17,18 @@ import java.util.Set;
 @Builder
 public class User {
     private Long id;
-    @Email
+
+    @Email(message = "Incorrect email")
     private String email;
-    @NotBlank
+
+    @NotBlank(message = "Login can't be empty")
     private String login;
+
     private String name;
+
     @Past (message = "Birthday can't be in future")
     private LocalDate birthday;
+
     private Set<Long> friends;
 
     public Map<String, Object> toMap() {

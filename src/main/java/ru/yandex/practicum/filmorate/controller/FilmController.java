@@ -18,45 +18,48 @@ public class FilmController {
 
     @PostMapping
     public Film createFilm(@Valid @RequestBody Film film) {
-        log.info("create film - {}", film);
-        return filmService.addFilm(film);
+        log.info("Hit endpoint: create film - {}", film);
+        return filmService.createFilm(film);
     }
 
     @PutMapping
     public Film editFilm(@Valid @RequestBody Film film) {
-        log.info("update film - {}", film);
-        return filmService.updateFilm(film);
+        log.info("Hit endpoint: update film - {}", film);
+        return filmService.editFilm(film);
     }
 
     @GetMapping
     public List<Film> getAllFilms() {
-        log.info("get all films");
+        log.info("Hit endpoint: get all films");
         return filmService.getAllFilms();
     }
 
     @GetMapping("/{id}")
-    public Film getFilmById(@PathVariable(value = "id") Long filmId) {
-        log.info("get film by id - {}", filmId);
+    public Film getFilmById(@PathVariable(value = "id") long filmId) {
+        log.info("Hit endpoint: get film by id - {}", filmId);
         return filmService.getFilmById(filmId);
     }
 
     @PutMapping("{id}/like/{userId}")
-    public void addLike(@PathVariable(value = "id") Long filmId, @PathVariable(value = "userId") Long userId) {
-        log.info("add like to film with id - {}, user id - {}", filmId, userId);
+    public void addLikeToFilm(@PathVariable(value = "id") long filmId,
+                              @PathVariable(value = "userId") long userId) {
+        log.info("Hit endpoint: add like to film with id - {}, from user with id - {}", filmId, userId);
         filmService.addLike(filmId, userId);
     }
 
     @GetMapping("/popular")
-    public List<Film> getPopularFilms(@RequestParam(value = "count", required = false, defaultValue = "10") int limit,
-                                      @RequestParam(value = "genreId", required = false) Integer genre,
-                                      @RequestParam(value = "year", required = false) Integer year) {
-        log.info("get popular films");
+    public List<Film> getPopularFilms(
+            @RequestParam(value = "count", required = false, defaultValue = "10") int limit,
+            @RequestParam(value = "genreId", required = false) Integer genre,
+            @RequestParam(value = "year", required = false) Integer year) {
+        log.info("Hit endpoint: get popular films");
         return filmService.getPopularFilms(limit, genre, year);
     }
 
     @DeleteMapping("{id}/like/{userId}")
-    public void deleteLike(@PathVariable(value = "id") Long filmId, @PathVariable(value = "userId") Long userId) {
-        log.info("delete like from film with id - {}", filmId);
+    public void deleteLikeFromFilm(@PathVariable(value = "id") long filmId,
+                                   @PathVariable(value = "userId") long userId) {
+        log.info("Hit endpoint: delete like from film with id - {}, from user with id - {}", filmId, userId);
         filmService.deleteLike(filmId, userId);
     }
 }

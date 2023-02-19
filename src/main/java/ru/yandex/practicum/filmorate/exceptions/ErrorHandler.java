@@ -1,47 +1,71 @@
 package ru.yandex.practicum.filmorate.exceptions;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import ru.yandex.practicum.filmorate.exceptions.FilmAlreadyExistsException;
-import ru.yandex.practicum.filmorate.exceptions.FilmNotFoundException;
-import ru.yandex.practicum.filmorate.exceptions.UserAlreadyExistsException;
-import ru.yandex.practicum.filmorate.exceptions.UserNotFoundException;
+import ru.yandex.practicum.filmorate.exceptions.validation.ValidationErrorResponse;
+import ru.yandex.practicum.filmorate.exceptions.validation.Violation;
 
-import javax.validation.ValidationException;
+import javax.validation.ConstraintViolationException;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class ErrorHandler {
 
-    @ExceptionHandler
-    public ResponseEntity<?> handleUserNotFound(final UserNotFoundException e) {
-        return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+    @ExceptionHandler(UserNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ApiError userNotFound(UserNotFoundException e) {
+        return ApiError.builder()
+                .status(HttpStatus.NOT_FOUND)
+                .reason("The required user was not found.")
+                .message(e.getLocalizedMessage())
+                .timestamp(LocalDateTime.now())
+                .build();
     }
 
-    @ExceptionHandler
-    public ResponseEntity<?> handleUserAlreadyExists(final UserAlreadyExistsException e) {
-        return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+    @ExceptionHandler(FilmNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ApiError filmNotFound(FilmNotFoundException e) {
+        return ApiError.builder()
+                .status(HttpStatus.NOT_FOUND)
+                .reason("The required user was not found")
+                .message(e.getLocalizedMessage())
+                .timestamp(LocalDateTime.now())
+                .build();
     }
 
-    @ExceptionHandler
-    public ResponseEntity<?> handleFilmNotFound(final FilmNotFoundException e) {
-        return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ResponseBody
+    public ValidationErrorResponse onMethodArgumentNotValidException(
+            MethodArgumentNotValidException e
+    ) {
+        final List<Violation> violations = e.getBindingResult().getFieldErrors().stream()
+                .map(error -> new Violation(error.getField(), error.getDefaultMessage()))
+                .collect(Collectors.toList());
+        return new ValidationErrorResponse(violations);
     }
 
-    @ExceptionHandler
-    public ResponseEntity<?> handleFilmAlreadyExists(final FilmAlreadyExistsException e) {
-        return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+    @ResponseBody
+    @ExceptionHandler(ConstraintViolationException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ValidationErrorResponse onConstraintValidationException(
+            ConstraintViolationException e
+    ) {
+        final List<Violation> violations = e.getConstraintViolations().stream()
+                .map(
+                        violation -> new Violation(
+                                violation.getPropertyPath().toString(),
+                                violation.getMessage()
+                        )
+                )
+                .collect(Collectors.toList());
+        return new ValidationErrorResponse(violations);
     }
 
-    @ExceptionHandler
-    public ResponseEntity<?> handleIncorrectValidation(final ValidationException e) {
-        return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
-    }
-
-//    @ExceptionHandler
-//    public ResponseEntity<?> handleThrowable(final Throwable e) {
-//        return new ResponseEntity<>("Произошла непредвиденная ошибка.", HttpStatus.INTERNAL_SERVER_ERROR);
-//        return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-//    }
 }

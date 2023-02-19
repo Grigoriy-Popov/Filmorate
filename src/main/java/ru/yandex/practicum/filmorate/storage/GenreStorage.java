@@ -1,10 +1,10 @@
 package ru.yandex.practicum.filmorate.storage;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Component;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.model.Genre;
 
@@ -14,20 +14,17 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
+@RequiredArgsConstructor
 @Slf4j
 public class GenreStorage {
-    private final JdbcTemplate jdbcTemplate;
-
-    @Autowired
-    public GenreStorage(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
-    }
+    private final NamedParameterJdbcTemplate jdbcTemplate;
 
     public Optional<Genre> getGenreById(int genreId) {
         Genre genre = null;
         try {
-            genre = jdbcTemplate.queryForObject("SELECT * FROM genres WHERE genre_id = ?",
-                    this::makeGenre, genreId);
+            String sql = "SELECT * FROM genres WHERE genre_id = :genre_id";
+            var parameterSource = new MapSqlParameterSource("genre_id", genreId);
+            genre = jdbcTemplate.queryForObject(sql, parameterSource ,this::makeGenre);
         } catch (EmptyResultDataAccessException e) {
             log.debug("Genre not found");
         }
