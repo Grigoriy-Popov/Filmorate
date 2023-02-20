@@ -23,4 +23,6 @@ public interface FilmService {
     List<Film> getCommonFilms(long userId, long friendId);
 
     void deleteFilm(long filmId);
+
+    List<Film> getAllFilmsOfDirectorSortedByLikesOrYears(int directorId, String sortBy);
 }

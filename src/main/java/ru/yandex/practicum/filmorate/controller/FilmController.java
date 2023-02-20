@@ -74,4 +74,11 @@ public class FilmController {
         log.info("Hit endpoint: delete film with id - {}", filmId);
         filmService.deleteFilm(filmId);
     }
+
+    @GetMapping("/director/{directorId}")
+    public List<Film> getAllFilmsOfDirectorSortedByLikes(@PathVariable int directorId,
+                                                         @RequestParam String sortBy) {
+        log.info("Hit endpoint: getAllFilmsOfDirectorSortedByLikes, dir id - {}", directorId);
+        return filmService.getAllFilmsOfDirectorSortedByLikesOrYears(directorId, sortBy);
+    }
 }

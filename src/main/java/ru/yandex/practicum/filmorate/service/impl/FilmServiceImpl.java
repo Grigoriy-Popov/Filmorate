@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exceptions.FilmNotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.service.DirectorService;
 import ru.yandex.practicum.filmorate.service.FilmService;
 import ru.yandex.practicum.filmorate.service.UserService;
 import ru.yandex.practicum.filmorate.storage.LikeStorage;
@@ -17,6 +18,7 @@ public class FilmServiceImpl implements FilmService {
     private final FilmStorage filmStorage;
     private final LikeStorage likeStorage;
     private final UserService userService;
+    private final DirectorService directorService;
 
     @Override
     public Film createFilm(Film film) {
@@ -25,6 +27,7 @@ public class FilmServiceImpl implements FilmService {
 
     @Override
     public Film editFilm(Film film) {
+        getFilmById(film.getId());
         return filmStorage.editFilm(film);
     }
 
@@ -69,5 +72,11 @@ public class FilmServiceImpl implements FilmService {
     public void deleteFilm(long filmId) {
         getFilmById(filmId);
         filmStorage.deleteFilm(filmId);
+    }
+
+    @Override
+    public List<Film> getAllFilmsOfDirectorSortedByLikesOrYears(int directorId, String sortBy) {
+        directorService.getDirectorById(directorId);
+        return filmStorage.getAllFilmsOfDirectorSortedByLikesOrYears(directorId, sortBy);
     }
 }

@@ -14,6 +14,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Repository
@@ -28,7 +29,7 @@ public class UserDbStorage implements UserStorage {
         var parameterSource = new MapSqlParameterSource(user.toMap());
         var holder = new GeneratedKeyHolder();
         namedParameterJdbcTemplate.update(sql, parameterSource, holder);
-        user.setId(holder.getKey().longValue());
+        user.setId(Objects.requireNonNull(holder.getKey()).longValue());
         return user;
     }
 

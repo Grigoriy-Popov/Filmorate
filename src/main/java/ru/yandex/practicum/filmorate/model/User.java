@@ -26,7 +26,7 @@ public class User {
 
     private String name;
 
-    @Past (message = "Birthday can't be in future")
+    @Past(message = "Birthday can't be in future")
     private LocalDate birthday;
 
     private Set<Long> friends;

@@ -37,6 +37,8 @@ public class Film {
     @NotNull(message = "Film can't be without mpa rating")
     private MpaRating mpa;
 
+    private Set<Director> directors;
+
     public Map<String, Object> toMap() {
         Map<String, Object> values = new HashMap<>();
         values.put("name", name);
