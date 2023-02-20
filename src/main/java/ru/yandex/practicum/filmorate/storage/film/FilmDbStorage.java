@@ -24,6 +24,7 @@ import java.util.*;
 public class FilmDbStorage implements FilmStorage {
     private final JdbcTemplate jdbcTemplate;
     private final GenreFilmStorage genreFilmStorage;
+    private final MpaService mpaService;
 
     @Override
     public Film createFilm(Film film) {
@@ -35,7 +36,12 @@ public class FilmDbStorage implements FilmStorage {
             for (Genre genre : film.getGenres()) {
                 genreFilmStorage.addGenre(genre.getId(), film.getId());
             }
+            setGenres(film);
+        } else {
+            film.setGenres(new HashSet<>());
         }
+        film.setUsersLikes(new HashSet<>());
+        film.setMpa(mpaService.getMpaById(film.getMpa().getId()));
         return film;
     }
 
@@ -121,11 +127,6 @@ public class FilmDbStorage implements FilmStorage {
         }
     }
 
-    public void deleteFilm(Long filmId) {
-        String sql = "DELETE FROM films WHERE film_id = ?";
-        jdbcTemplate.update(sql, filmId);
-    }
-
     @Override
     public List<Film> getCommonFilms(long userId, long friendId) {
         // 2 варианта sql запроса
@@ -138,6 +139,12 @@ public class FilmDbStorage implements FilmStorage {
                 "WHERE f.film_id IN (SELECT film_id FROM LIKES WHERE user_id = ? " +
                 "INTERSECT (SELECT film_id FROM LIKES WHERE user_id = ?))";
         return jdbcTemplate.query(sql, this::makeFilm, userId, friendId);
+    }
+
+    @Override
+    public void deleteFilm(Long filmId) {
+        String sql = "DELETE FROM films WHERE film_id = ?";
+        jdbcTemplate.update(sql, filmId);
     }
 
     private Film makeFilm(ResultSet rs, int rowNum) throws SQLException {

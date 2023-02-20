@@ -33,7 +33,7 @@ public class ErrorHandler {
     public ApiError filmNotFound(FilmNotFoundException e) {
         return ApiError.builder()
                 .status(HttpStatus.NOT_FOUND)
-                .reason("The required user was not found")
+                .reason("The required film was not found")
                 .message(e.getLocalizedMessage())
                 .timestamp(LocalDateTime.now())
                 .build();

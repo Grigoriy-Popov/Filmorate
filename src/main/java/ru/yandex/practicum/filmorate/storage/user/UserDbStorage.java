@@ -84,6 +84,13 @@ public class UserDbStorage implements UserStorage {
         return namedParameterJdbcTemplate.query(sql, parameterSource, this::makeUser);
     }
 
+    @Override
+    public void deleteUser(long userId) {
+        String sql = "DELETE FROM users WHERE user_id = :userId";
+        var parameterSource = new MapSqlParameterSource("userId", userId);
+        namedParameterJdbcTemplate.update(sql, parameterSource);
+    }
+
     private User makeUser(ResultSet rs, int rowNum) throws SQLException {
         var user = User.builder()
                 .id(rs.getLong("user_id"))

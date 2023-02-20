@@ -49,17 +49,26 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void deleteFriend(Long userId, Long friendId) {
+        getUserById(userId);
+        getUserById(friendId);
         friendsStorage.deleteFriend(userId, friendId);
     }
 
     @Override
     public List<User> getFriends(Long userId) {
+        getUserById(userId);
         return userStorage.getFriends(userId);
     }
 
     @Override
     public List<User> getCommonFriends(Long firstUserId, Long secondUserId) {
         return userStorage.getCommonFriends(firstUserId, secondUserId);
+    }
+
+    @Override
+    public void deleteUser(long userId) {
+        getUserById(userId);
+        userStorage.deleteUser(userId);
     }
 
     private void validateUser(User user) {

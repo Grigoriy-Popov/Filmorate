@@ -5,10 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import ru.yandex.practicum.filmorate.exceptions.validation.After;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Past;
-import javax.validation.constraints.Positive;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.*;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
@@ -37,6 +34,7 @@ public class Film {
 
     private Set<Genre> genres;
 
+    @NotNull(message = "Film can't be without mpa rating")
     private MpaRating mpa;
 
     public Map<String, Object> toMap() {

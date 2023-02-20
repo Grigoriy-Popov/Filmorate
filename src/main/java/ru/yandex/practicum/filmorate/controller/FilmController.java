@@ -68,4 +68,10 @@ public class FilmController {
         log.info("Hit endpoint: get common films - user1 with id {} and user2 with id - {}", userId, friendId);
         return filmService.getCommonFilms(userId, friendId);
     }
+
+    @DeleteMapping("/{filmId}")
+    public void deleteFilm(@PathVariable long filmId) {
+        log.info("Hit endpoint: delete film with id - {}", filmId);
+        filmService.deleteFilm(filmId);
+    }
 }
