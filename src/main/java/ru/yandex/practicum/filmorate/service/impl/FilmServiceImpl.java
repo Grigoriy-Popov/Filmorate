@@ -4,7 +4,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exceptions.FilmNotFoundException;
+import ru.yandex.practicum.filmorate.exceptions.UserNotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.FilmService;
 import ru.yandex.practicum.filmorate.service.UserService;
 import ru.yandex.practicum.filmorate.storage.LikeStorage;
@@ -42,6 +44,8 @@ public class FilmServiceImpl implements FilmService {
 
     @Override
     public void addLike(Long filmId, Long userId) {
+        getFilmById(filmId);
+        userService.getUserById(userId);
         likeStorage.addLike(filmId, userId);
     }
 
@@ -55,5 +59,16 @@ public class FilmServiceImpl implements FilmService {
     @Override
     public List<Film> getPopularFilms(int limit, Integer genre, Integer year) {
         return filmStorage.getPopularFilms(limit, genre, year);
+    }
+
+    @Override
+    public List<Film> getCommonFilms(long userId, long friendId) {
+        userService.getUserById(userId);
+        userService.getUserById(friendId);
+//        List<User> friends = userService.getFriends(userId);
+//        if (!friends.contains(friendId)) {
+//            throw new UserNotFoundException("Users are not friends");
+//        }
+        return filmStorage.getCommonFilms(userId, friendId);
     }
 }

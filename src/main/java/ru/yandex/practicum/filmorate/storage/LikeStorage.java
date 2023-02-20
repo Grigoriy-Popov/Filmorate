@@ -12,7 +12,7 @@ public class LikeStorage {
     private final JdbcTemplate jdbcTemplate;
 
     public void addLike(Long filmId, Long userId) {
-        String sql = "INSERT INTO likes(user_id, film_id) VALUES (?, ?)";
+        String sql = "INSERT INTO likes (user_id, film_id) VALUES (?, ?)";
         jdbcTemplate.update(sql, userId, filmId);
     }
 

@@ -62,4 +62,10 @@ public class FilmController {
         log.info("Hit endpoint: delete like from film with id - {}, from user with id - {}", filmId, userId);
         filmService.deleteLike(filmId, userId);
     }
+
+    @GetMapping("/common")
+    public List<Film> getCommonFilms(@RequestParam long userId, long friendId) {
+        log.info("Hit endpoint: get common films - user1 with id {} and user2 with id - {}", userId, friendId);
+        return filmService.getCommonFilms(userId, friendId);
+    }
 }

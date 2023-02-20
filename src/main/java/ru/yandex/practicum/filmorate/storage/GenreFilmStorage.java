@@ -12,7 +12,7 @@ public class GenreFilmStorage {
     private final JdbcTemplate jdbcTemplate;
 
     public void addGenre(int genreId, Long filmId) {
-        String sql = "INSERT INTO genre_film(genre_id, film_id) VALUES (?, ?)";
+        String sql = "INSERT INTO genre_film (genre_id, film_id) VALUES (?, ?)";
         jdbcTemplate.update(sql, genreId, filmId);
     }
 

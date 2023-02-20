@@ -10,6 +10,7 @@ import ru.yandex.practicum.filmorate.exceptions.FilmNotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.MpaRating;
+import ru.yandex.practicum.filmorate.service.MpaService;
 import ru.yandex.practicum.filmorate.storage.GenreFilmStorage;
 
 import java.sql.Date;
@@ -123,6 +124,20 @@ public class FilmDbStorage implements FilmStorage {
     public void deleteFilm(Long filmId) {
         String sql = "DELETE FROM films WHERE film_id = ?";
         jdbcTemplate.update(sql, filmId);
+    }
+
+    @Override
+    public List<Film> getCommonFilms(long userId, long friendId) {
+        // 2 варианта sql запроса
+//        String sql = "SELECT * FROM films f " +
+//                "JOIN mpa_rating m ON f.mpa_id = m.mpa_id WHERE " +
+//                "f.film_id IN (SELECT film_id FROM likes WHERE user_id = ?) " +
+//                "AND f.film_id IN (SELECT film_id FROM likes WHERE user_id = ?)";
+        String sql = "SELECT * FROM films f " +
+                "JOIN mpa_rating m ON f.mpa_id = m.mpa_id " +
+                "WHERE f.film_id IN (SELECT film_id FROM LIKES WHERE user_id = ? " +
+                "INTERSECT (SELECT film_id FROM LIKES WHERE user_id = ?))";
+        return jdbcTemplate.query(sql, this::makeFilm, userId, friendId);
     }
 
     private Film makeFilm(ResultSet rs, int rowNum) throws SQLException {
