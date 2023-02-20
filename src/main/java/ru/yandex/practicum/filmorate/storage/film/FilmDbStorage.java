@@ -67,9 +67,7 @@ public class FilmDbStorage implements FilmStorage {
     @Override
     public List<Film> getAllFilms() {
         String sql = "SELECT * FROM films JOIN mpa_rating ON films.mpa_id = mpa_rating.mpa_id";
-        List<Film> films = jdbcTemplate.query(sql, this::makeFilm);
-        films.forEach(this::setGenresAndLikesAndDirectors);
-        return films;
+        return jdbcTemplate.query(sql, this::makeFilm);
     }
 
     @Override
@@ -91,7 +89,7 @@ public class FilmDbStorage implements FilmStorage {
             String sql = "SELECT * FROM films f " +
                     "JOIN mpa_rating m ON f.mpa_id = m.mpa_id " +
                     "LEFT JOIN likes l ON f.film_id = l.film_id " +
-                    "GROUP BY f.film_id, l.user_id " +
+                    "GROUP BY f.film_id " +
                     "ORDER BY COUNT(l.user_id) DESC LIMIT ?";
             films = jdbcTemplate.query(sql, this::makeFilm, limit);
         } else if (genre != null && year == null) {
@@ -100,7 +98,7 @@ public class FilmDbStorage implements FilmStorage {
                     "LEFT JOIN likes l ON f.film_id = l.film_id " +
                     "LEFT JOIN genre_film gf ON f.film_id = gf.film_id " +
                     "WHERE gf.genre_id = ? " +
-                    "GROUP BY f.film_id, l.user_id, gf.genre_id " +
+                    "GROUP BY f.film_id " +
                     "ORDER BY COUNT(l.user_id) DESC LIMIT ?";
             films = jdbcTemplate.query(sql, this::makeFilm, genre, limit);
         } else if (genre == null && year != null) {
@@ -108,7 +106,7 @@ public class FilmDbStorage implements FilmStorage {
                     "JOIN mpa_rating m ON f.mpa_id = m.mpa_id " +
                     "LEFT JOIN likes l ON f.film_id = l.film_id " +
                     "WHERE EXTRACT(YEAR FROM f.release_date::DATE) = ? " +
-                    "GROUP BY f.film_id, l.user_id " +
+                    "GROUP BY f.film_id " +
                     "ORDER BY COUNT(l.user_id) DESC LIMIT ?";
             films = jdbcTemplate.query(sql, this::makeFilm, year, limit);
         } else {
@@ -117,12 +115,9 @@ public class FilmDbStorage implements FilmStorage {
                     "LEFT JOIN likes l ON f.film_id = l.film_id " +
                     "LEFT JOIN genre_film gf ON f.film_id = gf.film_id " +
                     "WHERE gf.genre_id = ? AND EXTRACT(YEAR FROM f.release_date::DATE) = ? " +
-                    "GROUP BY f.film_id, l.user_id " +
+                    "GROUP BY f.film_id " +
                     "ORDER BY COUNT(l.user_id) DESC LIMIT ?";
             films = jdbcTemplate.query(sql, this::makeFilm, genre, year, limit);
-        }
-        if (!films.isEmpty()) {
-            films.forEach(this::setGenresAndLikesAndDirectors);
         }
         return films;
     }
@@ -167,11 +162,7 @@ public class FilmDbStorage implements FilmStorage {
                     "GROUP BY f.film_id " +
                     "ORDER BY f.release_date";
         }
-        List<Film> films = jdbcTemplate.query(sql, this::makeFilm, directorId);
-        if (!films.isEmpty()) {
-            films.forEach(this::setGenresAndLikesAndDirectors);
-        }
-        return films;
+        return jdbcTemplate.query(sql, this::makeFilm, directorId);
     }
 
     private Film makeFilm(ResultSet rs, int rowNum) throws SQLException {
