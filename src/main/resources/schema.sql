@@ -2,8 +2,8 @@ drop table IF EXISTS director_film,directors,friends,genre_film,genres,likes,fil
 
 create TABLE IF NOT EXISTS mpa_rating
 (
-    mpa_id  INTEGER               NOT NULL,
-    name    VARCHAR_IGNORECASE(8) NOT NULL,
+    mpa_id      INTEGER               NOT NULL,
+    mpa_name    VARCHAR_IGNORECASE(8) NOT NULL,
     CONSTRAINT mpa_rating_pk PRIMARY KEY (mpa_id)
 );
 
@@ -14,7 +14,7 @@ create TABLE IF NOT EXISTS films
     description  VARCHAR,
     release_date DATE,
     duration     INTEGER,
-    mpa_id      INTEGER,
+    mpa_id       INTEGER,
     CONSTRAINT films_pk PRIMARY KEY (film_id),
     CONSTRAINT films_fk FOREIGN KEY (mpa_id) REFERENCES mpa_rating (mpa_id) ON delete CASCADE ON update CASCADE
 );

@@ -21,7 +21,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 @Slf4j
 public class UserDbStorage implements UserStorage {
-    private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
+    private final NamedParameterJdbcTemplate namedParameterJdbcTemplate; // Для эксперимента
 
     @Override
     public User createUser(User user) {
@@ -56,7 +56,7 @@ public class UserDbStorage implements UserStorage {
     }
 
     @Override
-    public Optional<User> getUserById(Long userId) {
+    public Optional<User> getUserById(long userId) {
         String sql = "SELECT * FROM users WHERE user_id = :user_id";
         User user = null;
         var parameterSource = new MapSqlParameterSource("user_id", userId);
@@ -69,7 +69,19 @@ public class UserDbStorage implements UserStorage {
     }
 
     @Override
-    public List<User> getFriends(Long userId) {
+    public boolean checkExistenceById(long userId) {
+        String sql = "SELECT user_id FROM users WHERE user_id = :user_id";
+        var parameterSource = new MapSqlParameterSource("user_id", userId);
+        try {
+            namedParameterJdbcTemplate.queryForObject(sql, parameterSource, Long.class);
+        } catch (EmptyResultDataAccessException e) {
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    public List<User> getFriends(long userId) {
         String sql = "SELECT * FROM users WHERE user_id IN (SELECT friend_id FROM friends WHERE user_id = :user_id)";
         var parameterSource = new MapSqlParameterSource("user_id", userId);
         return namedParameterJdbcTemplate.query(sql, parameterSource, this::makeUser);
@@ -79,8 +91,7 @@ public class UserDbStorage implements UserStorage {
     public List<User> getCommonFriends(Long user1Id, Long user2Id) {
         String sql = "SELECT * FROM users WHERE user_id IN (SELECT friend_id FROM friends WHERE user_id = :user1_id) " +
                 "AND user_id IN (SELECT friend_id FROM friends WHERE user_id = :user2_id)";
-        var parameterSource = new MapSqlParameterSource()
-                .addValue("user1_id", user1Id)
+        var parameterSource = new MapSqlParameterSource("user1_id", user1Id)
                 .addValue("user2_id", user2Id);
         return namedParameterJdbcTemplate.query(sql, parameterSource, this::makeUser);
     }

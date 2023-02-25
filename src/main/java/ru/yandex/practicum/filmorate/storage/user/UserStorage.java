@@ -12,9 +12,11 @@ public interface UserStorage {
 
     List<User> getAllUsers();
 
-    Optional<User> getUserById(Long userId);
+    Optional<User> getUserById(long userId);
 
-    List<User> getFriends(Long userId);
+    boolean checkExistenceById(long userId);
+
+    List<User> getFriends(long userId);
 
     List<User> getCommonFriends(Long user1Id, Long user2Id);
 

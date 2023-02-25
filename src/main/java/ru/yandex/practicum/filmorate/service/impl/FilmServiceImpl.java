@@ -27,7 +27,7 @@ public class FilmServiceImpl implements FilmService {
 
     @Override
     public Film editFilm(Film film) {
-        getFilmById(film.getId());
+        checkExistenceById(film.getId());
         return filmStorage.editFilm(film);
     }
 
@@ -37,22 +37,29 @@ public class FilmServiceImpl implements FilmService {
     }
 
     @Override
-    public Film getFilmById(Long id) {
-        return filmStorage.getFilmById(id)
-                .orElseThrow(() -> new FilmNotFoundException(String.format("Фильма с id %d не найдено", id)));
+    public Film getFilmById(long filmId) {
+        return filmStorage.getFilmById(filmId)
+                .orElseThrow(() -> new FilmNotFoundException(String.format("Фильма с id %d не найдено", filmId)));
+    }
+
+    @Override
+    public void checkExistenceById(long filmId) {
+        if (!filmStorage.checkExistenceById(filmId)) {
+            throw new FilmNotFoundException(String.format("Фильма с id %d не найдено", filmId));
+        }
     }
 
     @Override
     public void addLike(Long filmId, Long userId) {
-        getFilmById(filmId);
-        userService.getUserById(userId);
+        checkExistenceById(filmId);
+        userService.checkExistenceById(userId);
         likeStorage.addLike(filmId, userId);
     }
 
     @Override
     public void deleteLike(Long filmId, Long userId) {
-        getFilmById(filmId);
-        userService.getUserById(userId);
+        checkExistenceById(filmId);
+        userService.checkExistenceById(userId);
         likeStorage.deleteLike(filmId, userId);
     }
 
@@ -63,20 +70,25 @@ public class FilmServiceImpl implements FilmService {
 
     @Override
     public List<Film> getCommonFilms(long userId, long friendId) {
-        userService.getUserById(userId);
-        userService.getUserById(friendId);
+        userService.checkExistenceById(userId);
+        userService.checkExistenceById(friendId);
         return filmStorage.getCommonFilms(userId, friendId);
     }
 
     @Override
     public void deleteFilm(long filmId) {
-        getFilmById(filmId);
+        checkExistenceById(filmId);
         filmStorage.deleteFilm(filmId);
     }
 
     @Override
-    public List<Film> getAllFilmsOfDirectorSortedByLikesOrYears(int directorId, String sortBy) {
+    public List<Film> getAllFilmsOfDirector(int directorId, String sortBy) {
         directorService.getDirectorById(directorId);
-        return filmStorage.getAllFilmsOfDirectorSortedByLikesOrYears(directorId, sortBy);
+        return filmStorage.getAllFilmsOfDirector(directorId, sortBy);
+    }
+
+    @Override
+    public List<Film> searchFilms(String text, String[] by) {
+        return filmStorage.searchFilms(text, by);
     }
 }

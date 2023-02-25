@@ -6,6 +6,7 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Repository;
+import ru.yandex.practicum.filmorate.exceptions.FilmNotFoundException;
 import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
@@ -71,7 +72,7 @@ public class FilmDbStorage implements FilmStorage {
     }
 
     @Override
-    public Optional<Film> getFilmById(Long filmId) {
+    public Optional<Film> getFilmById(long filmId) {
         String sql = "SELECT * FROM films JOIN mpa_rating ON films.mpa_id = mpa_rating.mpa_id WHERE film_id = ?";
         Film film = null;
         try {
@@ -80,6 +81,17 @@ public class FilmDbStorage implements FilmStorage {
             log.debug("Film not found");
         }
         return Optional.ofNullable(film);
+    }
+
+    @Override
+    public boolean checkExistenceById(long filmId) {
+        String sql = "SELECT film_id FROM films WHERE film_id = ?";
+        try {
+            jdbcTemplate.queryForObject(sql, Long.class, filmId);
+        } catch (EmptyResultDataAccessException e) {
+            return false;
+        }
+        return true;
     }
 
     @Override
@@ -131,8 +143,8 @@ public class FilmDbStorage implements FilmStorage {
 //                "AND f.film_id IN (SELECT film_id FROM likes WHERE user_id = ?)";
         String sql = "SELECT * FROM films f " +
                 "JOIN mpa_rating m ON f.mpa_id = m.mpa_id " +
-                "WHERE f.film_id IN (SELECT film_id FROM LIKES WHERE user_id = ? " +
-                "INTERSECT (SELECT film_id FROM LIKES WHERE user_id = ?))";
+                "WHERE f.film_id IN (SELECT film_id FROM likes WHERE user_id = ? " +
+                "INTERSECT (SELECT film_id FROM likes WHERE user_id = ?))";
         return jdbcTemplate.query(sql, this::makeFilm, userId, friendId);
     }
 
@@ -143,7 +155,7 @@ public class FilmDbStorage implements FilmStorage {
     }
 
     @Override
-    public List<Film> getAllFilmsOfDirectorSortedByLikesOrYears(int directorId, String sortBy) {
+    public List<Film> getAllFilmsOfDirector(int directorId, String sortBy) {
         String sql;
         if (sortBy.equals("likes")) {
             sql = "SELECT * FROM films f " +
@@ -153,7 +165,7 @@ public class FilmDbStorage implements FilmStorage {
                     "WHERE df.director_id = ? " +
                     "GROUP BY f.film_id " +
                     "ORDER BY COUNT(l.user_id) DESC";
-        } else {
+        } else if (sortBy.equals("year")) {
             sql = "SELECT * FROM films f " +
                     "JOIN mpa_rating m ON f.mpa_id = m.mpa_id " +
                     "LEFT JOIN likes l ON f.film_id = l.film_id " +
@@ -161,8 +173,48 @@ public class FilmDbStorage implements FilmStorage {
                     "WHERE df.director_id = ? " +
                     "GROUP BY f.film_id " +
                     "ORDER BY f.release_date";
+        } else {
+            throw new FilmNotFoundException("Unknown search criteria");
         }
         return jdbcTemplate.query(sql, this::makeFilm, directorId);
+    }
+
+    @Override
+    public List<Film> searchFilms(String text, String[] by) {
+        switch (by.length) {
+            case 1:
+                String sql;
+                if (by[0].equals("title")) {
+                    sql = "SELECT * FROM films f " +
+                            "JOIN mpa_rating m ON f.mpa_id = m.mpa_id " +
+                            "WHERE upper(f.name) LIKE upper(concat('%', ?, '%'))";
+                } else if (by[0].equals("director")) {
+                    sql = "SELECT * FROM films f " +
+                            "JOIN mpa_rating m ON f.mpa_id = m.mpa_id " +
+                            "LEFT JOIN director_film df ON f.film_id = df.film_id " +
+                            "LEFT JOIN directors d ON d.director_id = df.director_id " +
+                            "WHERE upper(d.name) LIKE upper(concat('%', ?, '%'))";
+                } else {
+                    throw new FilmNotFoundException("Unknown search criteria");
+                }
+                return jdbcTemplate.query(sql, this::makeFilm, text);
+            case 2:
+                if ((by[0].equals("director") && by[1].equals("title")) ||
+                        (by[0].equals("title") && by[1].equals("director"))) {
+                    sql = "SELECT * FROM films f " +
+                            "JOIN mpa_rating m ON f.mpa_id = m.mpa_id " +
+                            "LEFT JOIN director_film df ON f.film_id = df.film_id " +
+                            "LEFT JOIN directors d ON d.director_id = df.director_id " +
+                            "WHERE upper(f.name) LIKE upper(concat('%', ?, '%')) " +
+                            "OR upper(d.name) LIKE upper(concat('%', ?, '%')) " +
+                            "ORDER BY f.film_id DESC";
+                    return jdbcTemplate.query(sql, this::makeFilm, text, text);
+                } else {
+                    throw new FilmNotFoundException("Unknown search criteria");
+                }
+            default:
+                return getPopularFilms(50, null, null);
+        }
     }
 
     private Film makeFilm(ResultSet rs, int rowNum) throws SQLException {
@@ -172,7 +224,7 @@ public class FilmDbStorage implements FilmStorage {
                 .description(rs.getString("description"))
                 .releaseDate(rs.getDate("release_Date").toLocalDate())
                 .duration(rs.getInt("duration"))
-                .mpa(new MpaRating(rs.getInt("mpa_id"), rs.getString(8)))
+                .mpa(new MpaRating(rs.getInt("mpa_id"), rs.getString("mpa_name")))
                 .build();
         setGenresAndLikesAndDirectors(film);
         return film;

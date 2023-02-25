@@ -13,7 +13,7 @@
 	<artifactId>filmorate</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>filmorate</name>
-	<description>Demo project for Spring Boot</description>
+	<description>App for add and review films</description>
 
 	<properties>
 		<java.version>11</java.version>
@@ -27,13 +27,7 @@
 
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-test</artifactId>
-			<scope>test</scope>
-		</dependency>
-
-		<dependency>
-			<groupId>org.projectlombok</groupId>
-			<artifactId>lombok</artifactId>
+			<artifactId>spring-boot-starter-jdbc</artifactId>
 		</dependency>
 
 		<dependency>
@@ -42,8 +36,8 @@
 		</dependency>
 
 		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-data-jpa</artifactId>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
 		</dependency>
 
 		<dependency>

@@ -12,7 +12,9 @@ public interface FilmService {
 
     List<Film> getAllFilms();
 
-    Film getFilmById(Long id);
+    Film getFilmById(long filmId);
+
+    void checkExistenceById(long filmId);
 
     List<Film> getPopularFilms(int count, Integer genre, Integer year);
 
@@ -24,5 +26,7 @@ public interface FilmService {
 
     void deleteFilm(long filmId);
 
-    List<Film> getAllFilmsOfDirectorSortedByLikesOrYears(int directorId, String sortBy);
+    List<Film> getAllFilmsOfDirector(int directorId, String sortBy);
+
+    List<Film> searchFilms(String text, String[] by);
 }

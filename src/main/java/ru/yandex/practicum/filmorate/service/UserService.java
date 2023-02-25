@@ -11,11 +11,13 @@ public interface UserService {
 
     List<User> getAllUsers();
 
-    User getUserById(Long id);
+    User getUserById(long userId);
 
-    List<User> getFriends(Long id);
+    List<User> getFriends(long userId);
 
     List<User> getCommonFriends(Long user1Id, Long user2Id);
+
+    void checkExistenceById(long userId);
 
     void addFriend(Long userId, Long friendId);
 

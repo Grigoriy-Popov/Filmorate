@@ -42,7 +42,7 @@ public class FilmController {
 
     @PutMapping("{id}/like/{userId}")
     public void addLikeToFilm(@PathVariable(value = "id") long filmId,
-                              @PathVariable(value = "userId") long userId) {
+                              @PathVariable long userId) {
         log.info("Hit endpoint: add like to film with id - {}, from user with id - {}", filmId, userId);
         filmService.addLike(filmId, userId);
     }
@@ -50,10 +50,10 @@ public class FilmController {
     @GetMapping("/popular")
     public List<Film> getPopularFilms(
             @RequestParam(value = "count", required = false, defaultValue = "10") int limit,
-            @RequestParam(value = "genreId", required = false) Integer genre,
-            @RequestParam(value = "year", required = false) Integer year) {
+            @RequestParam(required = false) Integer genreId,
+            @RequestParam(required = false) Integer year) {
         log.info("Hit endpoint: get popular films");
-        return filmService.getPopularFilms(limit, genre, year);
+        return filmService.getPopularFilms(limit, genreId, year);
     }
 
     @DeleteMapping("{id}/like/{userId}")
@@ -76,9 +76,17 @@ public class FilmController {
     }
 
     @GetMapping("/director/{directorId}")
-    public List<Film> getAllFilmsOfDirectorSortedByLikes(@PathVariable int directorId,
-                                                         @RequestParam String sortBy) {
-        log.info("Hit endpoint: getAllFilmsOfDirectorSortedByLikes, dir id - {}", directorId);
-        return filmService.getAllFilmsOfDirectorSortedByLikesOrYears(directorId, sortBy);
+    public List<Film> getAllFilmsOfDirector(@PathVariable int directorId,
+                @RequestParam(required = false, defaultValue = "likes") String sortBy) {
+        log.info("Hit endpoint: get all films of director, dir id - {}", directorId);
+        return filmService.getAllFilmsOfDirector(directorId, sortBy);
+    }
+
+    @GetMapping("/search")
+    public List<Film> searchFilms(
+            @RequestParam(value = "query", required = false, defaultValue = "") String text,
+            @RequestParam(value = "by", required = false) String[] by) {
+        log.info("Hit endpoint: search films by text - {}", text);
+        return filmService.searchFilms(text, by);
     }
 }
