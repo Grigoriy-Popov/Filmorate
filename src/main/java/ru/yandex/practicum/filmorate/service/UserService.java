@@ -15,13 +15,13 @@ public interface UserService {
 
     List<User> getFriends(long userId);
 
-    List<User> getCommonFriends(Long user1Id, Long user2Id);
+    List<User> getCommonFriends(long user1Id, long user2Id);
 
     void checkExistenceById(long userId);
 
-    void addFriend(Long userId, Long friendId);
+    void addFriend(long userId, long friendId);
 
-    void deleteFriend(Long userId, Long friendId);
+    void deleteFriend(long userId, long friendId);
 
     void deleteUser(long userId);
 }

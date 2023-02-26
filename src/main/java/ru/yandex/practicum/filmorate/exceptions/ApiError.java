@@ -16,8 +16,6 @@ import java.util.List;
 @AllArgsConstructor
 public class ApiError {
 
-    private List<Error> errors;
-
     private String message;
 
     private String reason;

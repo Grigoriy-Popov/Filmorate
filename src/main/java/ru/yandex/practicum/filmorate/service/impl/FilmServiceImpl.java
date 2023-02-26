@@ -50,14 +50,14 @@ public class FilmServiceImpl implements FilmService {
     }
 
     @Override
-    public void addLike(Long filmId, Long userId) {
+    public void addLike(long filmId, long userId) {
         checkExistenceById(filmId);
         userService.checkExistenceById(userId);
         likeStorage.addLike(filmId, userId);
     }
 
     @Override
-    public void deleteLike(Long filmId, Long userId) {
+    public void deleteLike(long filmId, long userId) {
         checkExistenceById(filmId);
         userService.checkExistenceById(userId);
         likeStorage.deleteLike(filmId, userId);

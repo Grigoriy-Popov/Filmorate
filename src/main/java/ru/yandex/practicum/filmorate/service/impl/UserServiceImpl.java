@@ -25,8 +25,8 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User editUser(User user) {
+        checkExistenceById(user.getId());
         validateUser(user);
-        getUserById(user.getId());
         return userStorage.editUser(user);
     }
 
@@ -49,14 +49,14 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void addFriend(Long userId, Long friendId) {
+    public void addFriend(long userId, long friendId) {
         checkExistenceById(userId);
         checkExistenceById(friendId);
         friendsStorage.addFriend(userId, friendId);
     }
 
     @Override
-    public void deleteFriend(Long userId, Long friendId) {
+    public void deleteFriend(long userId, long friendId) {
         checkExistenceById(userId);
         checkExistenceById(friendId);
         friendsStorage.deleteFriend(userId, friendId);
@@ -69,8 +69,10 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public List<User> getCommonFriends(Long firstUserId, Long secondUserId) {
-        return userStorage.getCommonFriends(firstUserId, secondUserId);
+    public List<User> getCommonFriends(long user1Id, long user2Id) {
+        checkExistenceById(user1Id);
+        checkExistenceById(user2Id);
+        return userStorage.getCommonFriends(user1Id, user2Id);
     }
 
     @Override
@@ -80,9 +82,6 @@ public class UserServiceImpl implements UserService {
     }
 
     private void validateUser(User user) {
-        if (user.getId() != null && user.getId() < 0) {
-            throw new UserNotFoundException("Некорретный id");
-        }
         if (user.getName().isEmpty()) {
             user.setName(user.getLogin());
         }

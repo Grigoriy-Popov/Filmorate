@@ -75,6 +75,7 @@ public class UserDbStorage implements UserStorage {
         try {
             namedParameterJdbcTemplate.queryForObject(sql, parameterSource, Long.class);
         } catch (EmptyResultDataAccessException e) {
+            log.debug("User with id {} not found", userId);
             return false;
         }
         return true;
@@ -88,9 +89,9 @@ public class UserDbStorage implements UserStorage {
     }
 
     @Override
-    public List<User> getCommonFriends(Long user1Id, Long user2Id) {
-        String sql = "SELECT * FROM users WHERE user_id IN (SELECT friend_id FROM friends WHERE user_id = :user1_id) " +
-                "AND user_id IN (SELECT friend_id FROM friends WHERE user_id = :user2_id)";
+    public List<User> getCommonFriends(long user1Id, long user2Id) {
+        String sql = "SELECT * FROM users WHERE user_id IN (SELECT friend_id FROM friends WHERE user_id = :user1_id " +
+                "INTERSECT (SELECT friend_id FROM friends WHERE user_id = :user2_id))";
         var parameterSource = new MapSqlParameterSource("user1_id", user1Id)
                 .addValue("user2_id", user2Id);
         return namedParameterJdbcTemplate.query(sql, parameterSource, this::makeUser);

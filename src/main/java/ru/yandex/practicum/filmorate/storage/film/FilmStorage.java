@@ -20,7 +20,7 @@ public interface FilmStorage {
 
     List<Film> getCommonFilms(long userId, long friendId);
 
-    void deleteFilm(Long filmId);
+    void deleteFilm(long filmId);
 
     List<Film> getAllFilmsOfDirector(int directorId, String sortBy);
 

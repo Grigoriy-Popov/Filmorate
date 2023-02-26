@@ -1,6 +1,8 @@
 package ru.yandex.practicum.filmorate.exceptions;
 
+import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpStatus;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -41,22 +43,31 @@ public class ErrorHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    @ResponseBody
-    public ValidationErrorResponse onMethodArgumentNotValidException(
-            MethodArgumentNotValidException e
-    ) {
-        final List<Violation> violations = e.getBindingResult().getFieldErrors().stream()
-                .map(error -> new Violation(error.getField(), error.getDefaultMessage()))
-                .collect(Collectors.toList());
-        return new ValidationErrorResponse(violations);
+    public ApiError onMethodArgumentNotValidException(MethodArgumentNotValidException e) {
+        FieldError error = e.getBindingResult().getFieldErrors().get(0);
+        return ApiError.builder()
+                .status(HttpStatus.BAD_REQUEST)
+                .reason("Bad validation")
+                .message("Field " + error.getField() + ". Error - "  + error.getDefaultMessage())
+                .timestamp(LocalDateTime.now())
+                .build();
     }
+
+//    Второй вариант обработки исключения при валидации данных
+    //    @ExceptionHandler(MethodArgumentNotValidException.class)
+//    @ResponseStatus(HttpStatus.BAD_REQUEST)
+//    @ResponseBody
+//    public ValidationErrorResponse onMethodArgumentNotValidException(MethodArgumentNotValidException e) {
+//        final List<Violation> violations = e.getBindingResult().getFieldErrors().stream()
+//                .map(error -> new Violation(error.getField(), error.getDefaultMessage()))
+//                .collect(Collectors.toList());
+//        return new ValidationErrorResponse(violations);
+//    }
 
     @ResponseBody
     @ExceptionHandler(ConstraintViolationException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ValidationErrorResponse onConstraintValidationException(
-            ConstraintViolationException e
-    ) {
+    public ValidationErrorResponse onConstraintValidationException(ConstraintViolationException e) {
         final List<Violation> violations = e.getConstraintViolations().stream()
                 .map(
                         violation -> new Violation(

@@ -97,15 +97,16 @@ public class FilmDbStorage implements FilmStorage {
     @Override
     public List<Film> getPopularFilms(int limit, Integer genre, Integer year) {
         List<Film> films;
+        String sql;
         if (genre == null && year == null) {
-            String sql = "SELECT * FROM films f " +
+            sql = "SELECT * FROM films f " +
                     "JOIN mpa_rating m ON f.mpa_id = m.mpa_id " +
                     "LEFT JOIN likes l ON f.film_id = l.film_id " +
                     "GROUP BY f.film_id " +
                     "ORDER BY COUNT(l.user_id) DESC LIMIT ?";
             films = jdbcTemplate.query(sql, this::makeFilm, limit);
         } else if (genre != null && year == null) {
-            String sql = "SELECT * FROM films f " +
+            sql = "SELECT * FROM films f " +
                     "JOIN mpa_rating m ON f.mpa_id = m.mpa_id " +
                     "LEFT JOIN likes l ON f.film_id = l.film_id " +
                     "LEFT JOIN genre_film gf ON f.film_id = gf.film_id " +
@@ -114,7 +115,7 @@ public class FilmDbStorage implements FilmStorage {
                     "ORDER BY COUNT(l.user_id) DESC LIMIT ?";
             films = jdbcTemplate.query(sql, this::makeFilm, genre, limit);
         } else if (genre == null && year != null) {
-            String sql = "SELECT * FROM films f " +
+            sql = "SELECT * FROM films f " +
                     "JOIN mpa_rating m ON f.mpa_id = m.mpa_id " +
                     "LEFT JOIN likes l ON f.film_id = l.film_id " +
                     "WHERE EXTRACT(YEAR FROM f.release_date::DATE) = ? " +
@@ -122,7 +123,7 @@ public class FilmDbStorage implements FilmStorage {
                     "ORDER BY COUNT(l.user_id) DESC LIMIT ?";
             films = jdbcTemplate.query(sql, this::makeFilm, year, limit);
         } else {
-            String sql = "SELECT * FROM films f " +
+            sql = "SELECT * FROM films f " +
                     "JOIN mpa_rating m ON f.mpa_id = m.mpa_id " +
                     "LEFT JOIN likes l ON f.film_id = l.film_id " +
                     "LEFT JOIN genre_film gf ON f.film_id = gf.film_id " +
@@ -136,11 +137,6 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public List<Film> getCommonFilms(long userId, long friendId) {
-        // 2 варианта sql запроса
-//        String sql = "SELECT * FROM films f " +
-//                "JOIN mpa_rating m ON f.mpa_id = m.mpa_id WHERE " +
-//                "f.film_id IN (SELECT film_id FROM likes WHERE user_id = ?) " +
-//                "AND f.film_id IN (SELECT film_id FROM likes WHERE user_id = ?)";
         String sql = "SELECT * FROM films f " +
                 "JOIN mpa_rating m ON f.mpa_id = m.mpa_id " +
                 "WHERE f.film_id IN (SELECT film_id FROM likes WHERE user_id = ? " +
@@ -149,7 +145,7 @@ public class FilmDbStorage implements FilmStorage {
     }
 
     @Override
-    public void deleteFilm(Long filmId) {
+    public void deleteFilm(long filmId) {
         String sql = "DELETE FROM films WHERE film_id = ?";
         jdbcTemplate.update(sql, filmId);
     }
