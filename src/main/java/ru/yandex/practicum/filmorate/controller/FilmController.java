@@ -35,13 +35,13 @@ public class FilmController {
     }
 
     @GetMapping("/{id}")
-    public Film getFilmById(@PathVariable(value = "id") long filmId) {
+    public Film getFilmById(@PathVariable("id") long filmId) {
         log.info("Hit endpoint: get film by id - {}", filmId);
         return filmService.getFilmById(filmId);
     }
 
     @PutMapping("{id}/like/{userId}")
-    public void addLikeToFilm(@PathVariable(value = "id") long filmId,
+    public void addLikeToFilm(@PathVariable("id") long filmId,
                               @PathVariable long userId) {
         log.info("Hit endpoint: add like to film with id - {}, from user with id - {}", filmId, userId);
         filmService.addLike(filmId, userId);
@@ -57,8 +57,8 @@ public class FilmController {
     }
 
     @DeleteMapping("{id}/like/{userId}")
-    public void deleteLikeFromFilm(@PathVariable(value = "id") long filmId,
-                                   @PathVariable(value = "userId") long userId) {
+    public void deleteLikeFromFilm(@PathVariable("id") long filmId,
+                                   @PathVariable long userId) {
         log.info("Hit endpoint: delete like from film with id - {}, from user with id - {}", filmId, userId);
         filmService.deleteLike(filmId, userId);
     }

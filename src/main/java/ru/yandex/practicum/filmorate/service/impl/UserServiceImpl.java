@@ -2,7 +2,6 @@ package ru.yandex.practicum.filmorate.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.exceptions.FilmNotFoundException;
 import ru.yandex.practicum.filmorate.exceptions.UserNotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.UserService;
@@ -44,7 +43,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public void checkExistenceById(long userId) {
         if (!userStorage.checkExistenceById(userId)) {
-            throw new FilmNotFoundException(String.format("Фильма с id %d не найдено", userId));
+            throw new UserNotFoundException(String.format("Пользователя с id %d не найдено", userId));
         }
     }
 

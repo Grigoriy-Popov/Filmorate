@@ -35,13 +35,13 @@ public class DirectorController {
     }
 
     @GetMapping("/{id}")
-    public Director getDirectorById(@PathVariable(value = "id") int directorId) {
+    public Director getDirectorById(@PathVariable("id") int directorId) {
         log.info("Hit endpoint: get director by id - {}", directorId);
         return directorService.getDirectorById(directorId);
     }
 
     @DeleteMapping("/{id}")
-    public void deleteDirector(@PathVariable(value = "id") int directorId) {
+    public void deleteDirector(@PathVariable("id") int directorId) {
         log.info("Hit endpoint: delete director by id - {}", directorId);
         directorService.deleteDirector(directorId);
     }

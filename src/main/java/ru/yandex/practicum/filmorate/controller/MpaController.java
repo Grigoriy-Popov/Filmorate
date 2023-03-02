@@ -25,7 +25,7 @@ public class MpaController {
     }
 
     @GetMapping("/{id}")
-    public MpaRating getMpaById(@PathVariable(value = "id") int mpaId) {
+    public MpaRating getMpaById(@PathVariable("id") int mpaId) {
         log.info("Hit endpoint: get MPA by id - {}", mpaId);
         return mpaService.getMpaById(mpaId);
     }

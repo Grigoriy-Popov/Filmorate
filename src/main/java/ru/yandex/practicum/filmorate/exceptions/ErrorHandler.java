@@ -48,7 +48,7 @@ public class ErrorHandler {
         return ApiError.builder()
                 .status(HttpStatus.BAD_REQUEST)
                 .reason("Bad validation")
-                .message("Field " + error.getField() + ". Error - "  + error.getDefaultMessage())
+                .message("Field '" + error.getField() + "'. Error - "  + error.getDefaultMessage())
                 .timestamp(LocalDateTime.now())
                 .build();
     }
