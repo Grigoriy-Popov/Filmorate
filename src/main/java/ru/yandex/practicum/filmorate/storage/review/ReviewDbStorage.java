@@ -6,6 +6,7 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Repository;
+import ru.yandex.practicum.filmorate.exceptions.UserNotFoundException;
 import ru.yandex.practicum.filmorate.model.Review;
 
 import java.sql.ResultSet;
@@ -81,34 +82,44 @@ public class ReviewDbStorage implements ReviewStorage {
 
     @Override
     public void addLikeToReview(long reviewId, long userId) {
-        Review review = getReviewById(reviewId).get();
-        review.setUseful(review.getUseful() + 1);
-        String sql = "UPDATE reviews SET useful = ? WHERE review_id = ?";
-        jdbcTemplate.update(sql, review.getUseful(), review.getReviewId());
+        String sqlInsertReviewLike = "INSERT INTO review_likes(review_id, user_id, liked) VALUES (?, ?, true)";
+        jdbcTemplate.update(sqlInsertReviewLike, reviewId, userId);
+        String sqlSetUseful = "UPDATE reviews SET useful = useful + 1 WHERE review_id = ?";
+        jdbcTemplate.update(sqlSetUseful, reviewId);
     }
 
     @Override
     public void addDislikeToReview(long reviewId, long userId) {
-        Review review = getReviewById(reviewId).get();
-        review.setUseful(review.getUseful() - 1);
-        String sql = "UPDATE reviews SET useful = ? WHERE review_id = ?";
-        jdbcTemplate.update(sql, review.getUseful(), review.getReviewId());
+        String sqlInsertReviewDislike = "INSERT INTO review_likes(review_id, user_id, liked) VALUES (?, ?, false)";
+        jdbcTemplate.update(sqlInsertReviewDislike, reviewId, userId);
+        String sql = "UPDATE reviews SET useful = useful - 1 WHERE review_id = ?";
+        jdbcTemplate.update(sql, reviewId);
     }
 
     @Override
     public void removeLikeFromReview(long reviewId, long userId) {
-        Review review = getReviewById(reviewId).get();
-        review.setUseful(review.getUseful() - 1);
-        String sql = "UPDATE reviews SET useful = ? WHERE review_id = ?";
-        jdbcTemplate.update(sql, review.getUseful(), review.getReviewId());
+        try {
+            String checkLikeOnReview = "SELECT user_id FROM review_likes WHERE review_id = ? AND user_id = ? " +
+                    "AND liked = true";
+            jdbcTemplate.queryForObject(checkLikeOnReview, Long.class, reviewId, userId);
+        } catch (EmptyResultDataAccessException e) {
+            throw new UserNotFoundException("User don't set like to this review");
+        }
+        String sql = "UPDATE reviews SET useful = useful - 1 WHERE review_id = ?";
+        jdbcTemplate.update(sql, reviewId);
     }
 
     @Override
     public void removeDislikeFromReview(long reviewId, long userId) {
-        Review review = getReviewById(reviewId).get();
-        review.setUseful(review.getUseful() + 1);
-        String sql = "UPDATE reviews SET useful = ? WHERE review_id = ?";
-        jdbcTemplate.update(sql, review.getUseful(), review.getReviewId());
+        try {
+            String checkLikeOnReview = "SELECT user_id FROM review_likes WHERE review_id = ? AND user_id = ? " +
+                    "AND liked = false";
+            jdbcTemplate.queryForObject(checkLikeOnReview, Long.class, reviewId, userId);
+        } catch (EmptyResultDataAccessException e) {
+            throw new UserNotFoundException("User don't set dislike to this review");
+        }
+        String sql = "UPDATE reviews SET useful = useful + 1 WHERE review_id = ?";
+        jdbcTemplate.update(sql, reviewId);
     }
 
     private Review makeReview(ResultSet rs, int rowNum) throws SQLException {
