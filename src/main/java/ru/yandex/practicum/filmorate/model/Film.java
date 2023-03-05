@@ -3,9 +3,12 @@ package ru.yandex.practicum.filmorate.model;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import ru.yandex.practicum.filmorate.exceptions.validation.After;
+import ru.yandex.practicum.filmorate.exceptions.validation.AfterCinemaBirthday;
 
-import javax.validation.constraints.*;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Positive;
+import javax.validation.constraints.Size;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
@@ -24,7 +27,7 @@ public class Film {
     @Size(max = 200, message = "Description size can't be more then 200 symbols")
     private String description;
 
-    @After
+    @AfterCinemaBirthday
     private LocalDate releaseDate;
 
     @Positive(message = "Duration can't be negative")

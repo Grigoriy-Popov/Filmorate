@@ -40,13 +40,6 @@ public class FilmController {
         return filmService.getFilmById(filmId);
     }
 
-    @PutMapping("{id}/like/{userId}")
-    public void addLikeToFilm(@PathVariable("id") long filmId,
-                              @PathVariable long userId) {
-        log.info("Hit endpoint: add like to film with id - {}, from user with id - {}", filmId, userId);
-        filmService.addLike(filmId, userId);
-    }
-
     @GetMapping("/popular")
     public List<Film> getPopularFilms(
             @RequestParam(value = "count", required = false, defaultValue = "10") int limit,
@@ -54,6 +47,13 @@ public class FilmController {
             @RequestParam(required = false) Integer year) {
         log.info("Hit endpoint: get popular films");
         return filmService.getPopularFilms(limit, genreId, year);
+    }
+
+    @PutMapping("{id}/like/{userId}")
+    public void addLikeToFilm(@PathVariable("id") long filmId,
+                              @PathVariable long userId) {
+        log.info("Hit endpoint: add like to film with id - {}, from user with id - {}", filmId, userId);
+        filmService.addLike(filmId, userId);
     }
 
     @DeleteMapping("{id}/like/{userId}")

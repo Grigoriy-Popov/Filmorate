@@ -8,9 +8,14 @@ import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.exceptions.UserNotFoundException;
 import ru.yandex.practicum.filmorate.model.Review;
+import ru.yandex.practicum.filmorate.model.events.Event;
+import ru.yandex.practicum.filmorate.model.events.EventType;
+import ru.yandex.practicum.filmorate.model.events.Operation;
+import ru.yandex.practicum.filmorate.storage.event.EventStorage;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -19,6 +24,7 @@ import java.util.Optional;
 @Slf4j
 public class ReviewDbStorage implements ReviewStorage {
     private final JdbcTemplate jdbcTemplate;
+    private final EventStorage eventStorage;
 
     @Override
     public Review createReview(Review review) {
@@ -27,20 +33,49 @@ public class ReviewDbStorage implements ReviewStorage {
                 .withTableName("reviews")
                 .usingGeneratedKeyColumns("review_id");
         review.setReviewId(simpleJdbcInsert.executeAndReturnKey(review.toMap()).longValue());
+
+        eventStorage.saveEvent(Event.builder()
+                .timestamp(Instant.now().toEpochMilli())
+                .userId(review.getUserId())
+                .eventType(EventType.REVIEW)
+                .operation(Operation.ADD)
+                .entityId(review.getReviewId())
+                .build());
+
         return review;
     }
 
     @Override
     public Review editReview(Review review) {
+        Review reviewFromDb = getReviewById(review.getReviewId()).get();
         String sql = "UPDATE reviews SET content = ?, is_positive = ? WHERE review_id = ?";
         jdbcTemplate.update(sql, review.getContent(), review.getIsPositive(), review.getReviewId());
+
+        eventStorage.saveEvent(Event.builder()
+                .timestamp(Instant.now().toEpochMilli())
+                .userId(reviewFromDb.getUserId())
+                .eventType(EventType.REVIEW)
+                .operation(Operation.UPDATE)
+                .entityId(review.getReviewId())
+                .build());
+
         return getReviewById(review.getReviewId()).get();
     }
 
     @Override
     public void deleteReview(long reviewId) {
+        Review review = getReviewById(reviewId).get();
+
         String sql = "DELETE FROM reviews WHERE review_id = ?";
         jdbcTemplate.update(sql, reviewId);
+
+        eventStorage.saveEvent(Event.builder()
+                .timestamp(Instant.now().toEpochMilli())
+                .userId(review.getUserId())
+                .eventType(EventType.REVIEW)
+                .operation(Operation.REMOVE)
+                .entityId(reviewId)
+                .build());
     }
 
     @Override
