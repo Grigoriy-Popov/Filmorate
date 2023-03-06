@@ -3,11 +3,12 @@ package ru.yandex.practicum.filmorate.storage.user;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.stereotype.Repository;
-import ru.yandex.practicum.filmorate.exceptions.UserNotFoundException;
+import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.sql.ResultSet;
@@ -20,7 +21,7 @@ import java.util.Optional;
 @Repository
 @RequiredArgsConstructor
 @Slf4j
-public class UserDbStorage implements UserStorage {
+public class UserDbStorage implements UserStorage, RowMapper<User> {
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate; // Для эксперимента
 
     @Override
@@ -35,8 +36,6 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public User editUser(User user) {
-        getUserById(user.getId())
-                .orElseThrow(() -> new UserNotFoundException("User with id not found"));
         String sql = "UPDATE users SET email = :email, login = :login, name = :name, birthday = :birthday " +
                 "WHERE user_id = :user_id";
         var parameterSource = new MapSqlParameterSource()
@@ -52,7 +51,7 @@ public class UserDbStorage implements UserStorage {
     @Override
     public List<User> getAllUsers() {
         String sql = "SELECT * FROM users";
-        return namedParameterJdbcTemplate.query(sql, this::makeUser);
+        return namedParameterJdbcTemplate.query(sql, this);
     }
 
     @Override
@@ -61,7 +60,7 @@ public class UserDbStorage implements UserStorage {
         User user = null;
         var parameterSource = new MapSqlParameterSource("user_id", userId);
         try {
-            user = namedParameterJdbcTemplate.queryForObject(sql, parameterSource, this::makeUser);
+            user = namedParameterJdbcTemplate.queryForObject(sql, parameterSource, this);
         } catch (EmptyResultDataAccessException e) {
             log.debug("User with id {} not found", userId);
         }
@@ -85,7 +84,7 @@ public class UserDbStorage implements UserStorage {
     public List<User> getFriends(long userId) {
         String sql = "SELECT * FROM users WHERE user_id IN (SELECT friend_id FROM friends WHERE user_id = :user_id)";
         var parameterSource = new MapSqlParameterSource("user_id", userId);
-        return namedParameterJdbcTemplate.query(sql, parameterSource, this::makeUser);
+        return namedParameterJdbcTemplate.query(sql, parameterSource, this);
     }
 
     @Override
@@ -94,7 +93,7 @@ public class UserDbStorage implements UserStorage {
                 "INTERSECT (SELECT friend_id FROM friends WHERE user_id = :user2_id))";
         var parameterSource = new MapSqlParameterSource("user1_id", user1Id)
                 .addValue("user2_id", user2Id);
-        return namedParameterJdbcTemplate.query(sql, parameterSource, this::makeUser);
+        return namedParameterJdbcTemplate.query(sql, parameterSource, this);
     }
 
     @Override
@@ -104,7 +103,13 @@ public class UserDbStorage implements UserStorage {
         namedParameterJdbcTemplate.update(sql, parameterSource);
     }
 
-    private User makeUser(ResultSet rs, int rowNum) throws SQLException {
+    @Override
+    public List<Film> getRecommendedFilmsByUserId(long userId) {
+        return null;
+    }
+
+    @Override
+    public User mapRow(ResultSet rs, int rowNum) throws SQLException {
         var user = User.builder()
                 .id(rs.getLong("user_id"))
                 .email(rs.getString("email"))

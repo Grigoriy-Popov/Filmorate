@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.controller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
+import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.model.events.Event;
 import ru.yandex.practicum.filmorate.service.EventService;
@@ -77,5 +78,11 @@ public class UserController {
     public List<Event> getEventsByUserId(@PathVariable("id") long userId) {
         log.info("Hit endpoint: get event of user - {}", userId);
         return eventService.getEventsByUserId(userId);
+    }
+
+    @GetMapping("/{id}/recommendations`")
+    public List<Film> getRecommendedFilmsByUserId(@PathVariable("id") long userId) {
+        log.info("Hit endpoint: get recommended films to user - {}", userId);
+        return userService.getRecommendedFilmsByUserId(userId);
     }
 }

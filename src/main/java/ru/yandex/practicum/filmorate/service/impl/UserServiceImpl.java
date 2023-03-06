@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.service.impl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exceptions.UserNotFoundException;
+import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.UserService;
 import ru.yandex.practicum.filmorate.storage.FriendsStorage;
@@ -78,6 +79,12 @@ public class UserServiceImpl implements UserService {
     public void deleteUser(long userId) {
         checkExistenceById(userId);
         userStorage.deleteUser(userId);
+    }
+
+    @Override
+    public List<Film> getRecommendedFilmsByUserId(long userId) {
+        checkExistenceById(userId);
+        return userStorage.getRecommendedFilmsByUserId(userId);
     }
 
     private void validateUser(User user) {
