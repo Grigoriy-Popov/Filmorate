@@ -13,16 +13,14 @@ import ru.yandex.practicum.filmorate.model.User;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 @Repository
 @RequiredArgsConstructor
 @Slf4j
 public class UserDbStorage implements UserStorage, RowMapper<User> {
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate; // Для эксперимента
+    private final RowMapper<Film> filmService;
 
     @Override
     public User createUser(User user) {
@@ -37,13 +35,13 @@ public class UserDbStorage implements UserStorage, RowMapper<User> {
     @Override
     public User editUser(User user) {
         String sql = "UPDATE users SET email = :email, login = :login, name = :name, birthday = :birthday " +
-                "WHERE user_id = :user_id";
+                "WHERE user_id = :userId";
         var parameterSource = new MapSqlParameterSource()
                 .addValue("email", user.getEmail())
                 .addValue("login", user.getLogin())
                 .addValue("name", user.getName())
                 .addValue("birthday", user.getBirthday())
-                .addValue("user_id", user.getId());
+                .addValue("userId", user.getId());
         namedParameterJdbcTemplate.update(sql, parameterSource);
         return user;
     }
@@ -56,9 +54,9 @@ public class UserDbStorage implements UserStorage, RowMapper<User> {
 
     @Override
     public Optional<User> getUserById(long userId) {
-        String sql = "SELECT * FROM users WHERE user_id = :user_id";
+        String sql = "SELECT * FROM users WHERE user_id = :userId";
         User user = null;
-        var parameterSource = new MapSqlParameterSource("user_id", userId);
+        var parameterSource = new MapSqlParameterSource("userId", userId);
         try {
             user = namedParameterJdbcTemplate.queryForObject(sql, parameterSource, this);
         } catch (EmptyResultDataAccessException e) {
@@ -69,8 +67,8 @@ public class UserDbStorage implements UserStorage, RowMapper<User> {
 
     @Override
     public boolean checkExistenceById(long userId) {
-        String sql = "SELECT user_id FROM users WHERE user_id = :user_id";
-        var parameterSource = new MapSqlParameterSource("user_id", userId);
+        String sql = "SELECT user_id FROM users WHERE user_id = :userId";
+        var parameterSource = new MapSqlParameterSource("userId", userId);
         try {
             namedParameterJdbcTemplate.queryForObject(sql, parameterSource, Long.class);
         } catch (EmptyResultDataAccessException e) {
@@ -82,8 +80,8 @@ public class UserDbStorage implements UserStorage, RowMapper<User> {
 
     @Override
     public List<User> getFriends(long userId) {
-        String sql = "SELECT * FROM users WHERE user_id IN (SELECT friend_id FROM friends WHERE user_id = :user_id)";
-        var parameterSource = new MapSqlParameterSource("user_id", userId);
+        String sql = "SELECT * FROM users WHERE user_id IN (SELECT friend_id FROM friends WHERE user_id = :userId)";
+        var parameterSource = new MapSqlParameterSource("userId", userId);
         return namedParameterJdbcTemplate.query(sql, parameterSource, this);
     }
 
@@ -105,7 +103,22 @@ public class UserDbStorage implements UserStorage, RowMapper<User> {
 
     @Override
     public List<Film> getRecommendedFilmsByUserId(long userId) {
-        return null;
+        Long recommendedUserId;
+        try {
+            recommendedUserId = getRecommendedUserByLikes(userId);
+            } catch (EmptyResultDataAccessException e) {
+            log.debug("Recommended user not found");
+            return new ArrayList<>();
+        }
+        String sql = "SELECT * FROM films f " +
+                "JOIN mpa_rating m ON f.mpa_id = m.mpa_id " +
+                "WHERE film_id IN (SELECT film_id FROM likes l WHERE l.film_id IN " +
+                "(SELECT film_id FROM likes WHERE user_id = :recommendedUserId) " +
+                "AND film_id NOT IN (SELECT film_id FROM likes WHERE user_id = :userId)) ";
+        var parameterSource = new MapSqlParameterSource
+                ("recommendedUserId", recommendedUserId)
+                .addValue("userId", userId);
+        return namedParameterJdbcTemplate.query(sql, parameterSource, filmService);
     }
 
     @Override
@@ -122,11 +135,22 @@ public class UserDbStorage implements UserStorage, RowMapper<User> {
     }
 
     private void setFriends(User user) {
-        String sql = "SELECT user_id FROM users" +
-                " WHERE user_id IN (SELECT friend_id FROM friends WHERE user_id = :user_id)";
-        var parameterSource = new MapSqlParameterSource("user_id", user.getId());
+        String sql = "SELECT user_id FROM users " +
+                "WHERE user_id IN (SELECT friend_id FROM friends WHERE user_id = :userId)";
+        var parameterSource = new MapSqlParameterSource("userId", user.getId());
         List<Long> users = namedParameterJdbcTemplate
                 .query(sql, parameterSource, (rs, rowNum) -> rs.getLong("user_id"));
         user.setFriends(users.isEmpty() ? new HashSet<>() : new HashSet<>(users));
+    }
+
+    private Long getRecommendedUserByLikes(long userId) {
+        var parameterSource = new MapSqlParameterSource("userId", userId);
+        String sqlForFindRecommendedUser = "SELECT user_id FROM likes l WHERE film_id IN " +
+                "(SELECT film_id FROM likes WHERE user_id = :userId) AND l.user_id != :userId " +
+                "GROUP BY user_id " +
+                "ORDER BY COUNT(film_id) DESC " +
+                "LIMIT 1";
+        return namedParameterJdbcTemplate.queryForObject(sqlForFindRecommendedUser,
+                parameterSource, (rs, rowNum) -> rs.getLong("user_id"));
     }
 }

@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.exceptions.FilmNotFoundException;
@@ -23,7 +24,7 @@ import java.util.*;
 @Repository
 @RequiredArgsConstructor
 @Slf4j
-public class FilmDbStorage implements FilmStorage {
+public class FilmDbStorage implements FilmStorage, RowMapper<Film> {
     private final JdbcTemplate jdbcTemplate;
     private final GenreFilmStorage genreFilmStorage;
     private final DirectorFilmStorage directorFilmStorage;
@@ -68,7 +69,7 @@ public class FilmDbStorage implements FilmStorage {
     @Override
     public List<Film> getAllFilms() {
         String sql = "SELECT * FROM films JOIN mpa_rating ON films.mpa_id = mpa_rating.mpa_id";
-        return jdbcTemplate.query(sql, this::makeFilm);
+        return jdbcTemplate.query(sql, this::mapRow);
     }
 
     @Override
@@ -76,7 +77,7 @@ public class FilmDbStorage implements FilmStorage {
         String sql = "SELECT * FROM films JOIN mpa_rating ON films.mpa_id = mpa_rating.mpa_id WHERE film_id = ?";
         Film film = null;
         try {
-            film = jdbcTemplate.queryForObject(sql, this::makeFilm, filmId);
+            film = jdbcTemplate.queryForObject(sql, this::mapRow, filmId);
         } catch (EmptyResultDataAccessException e) {
             log.debug("Film not found");
         }
@@ -104,7 +105,7 @@ public class FilmDbStorage implements FilmStorage {
                     "LEFT JOIN likes l ON f.film_id = l.film_id " +
                     "GROUP BY f.film_id " +
                     "ORDER BY COUNT(l.user_id) DESC LIMIT ?";
-            films = jdbcTemplate.query(sql, this::makeFilm, limit);
+            films = jdbcTemplate.query(sql, this::mapRow, limit);
         } else if (genre != null && year == null) {
             sql = "SELECT * FROM films f " +
                     "JOIN mpa_rating m ON f.mpa_id = m.mpa_id " +
@@ -113,7 +114,7 @@ public class FilmDbStorage implements FilmStorage {
                     "WHERE gf.genre_id = ? " +
                     "GROUP BY f.film_id " +
                     "ORDER BY COUNT(l.user_id) DESC LIMIT ?";
-            films = jdbcTemplate.query(sql, this::makeFilm, genre, limit);
+            films = jdbcTemplate.query(sql, this::mapRow, genre, limit);
         } else if (genre == null && year != null) {
             sql = "SELECT * FROM films f " +
                     "JOIN mpa_rating m ON f.mpa_id = m.mpa_id " +
@@ -121,7 +122,7 @@ public class FilmDbStorage implements FilmStorage {
                     "WHERE EXTRACT(YEAR FROM f.release_date::DATE) = ? " +
                     "GROUP BY f.film_id " +
                     "ORDER BY COUNT(l.user_id) DESC LIMIT ?";
-            films = jdbcTemplate.query(sql, this::makeFilm, year, limit);
+            films = jdbcTemplate.query(sql, this::mapRow, year, limit);
         } else {
             sql = "SELECT * FROM films f " +
                     "JOIN mpa_rating m ON f.mpa_id = m.mpa_id " +
@@ -130,7 +131,7 @@ public class FilmDbStorage implements FilmStorage {
                     "WHERE gf.genre_id = ? AND EXTRACT(YEAR FROM f.release_date::DATE) = ? " +
                     "GROUP BY f.film_id " +
                     "ORDER BY COUNT(l.user_id) DESC LIMIT ?";
-            films = jdbcTemplate.query(sql, this::makeFilm, genre, year, limit);
+            films = jdbcTemplate.query(sql, this::mapRow, genre, year, limit);
         }
         return films;
     }
@@ -141,7 +142,7 @@ public class FilmDbStorage implements FilmStorage {
                 "JOIN mpa_rating m ON f.mpa_id = m.mpa_id " +
                 "WHERE f.film_id IN (SELECT film_id FROM likes WHERE user_id = ? " +
                 "INTERSECT (SELECT film_id FROM likes WHERE user_id = ?))";
-        return jdbcTemplate.query(sql, this::makeFilm, userId, friendId);
+        return jdbcTemplate.query(sql, this::mapRow, userId, friendId);
     }
 
     @Override
@@ -172,7 +173,7 @@ public class FilmDbStorage implements FilmStorage {
         } else {
             throw new FilmNotFoundException("Unknown search criteria");
         }
-        return jdbcTemplate.query(sql, this::makeFilm, directorId);
+        return jdbcTemplate.query(sql, this::mapRow, directorId);
     }
 
     @Override
@@ -193,7 +194,7 @@ public class FilmDbStorage implements FilmStorage {
                 } else {
                     throw new FilmNotFoundException("Unknown search criteria");
                 }
-                return jdbcTemplate.query(sql, this::makeFilm, text);
+                return jdbcTemplate.query(sql, this::mapRow, text);
             case 2:
                 if ((by[0].equals("director") && by[1].equals("title")) ||
                         (by[0].equals("title") && by[1].equals("director"))) {
@@ -204,7 +205,7 @@ public class FilmDbStorage implements FilmStorage {
                             "WHERE upper(f.name) LIKE upper(concat('%', ?, '%')) " +
                             "OR upper(d.name) LIKE upper(concat('%', ?, '%')) " +
                             "ORDER BY f.film_id DESC";
-                    return jdbcTemplate.query(sql, this::makeFilm, text, text);
+                    return jdbcTemplate.query(sql, this::mapRow, text, text);
                 } else {
                     throw new FilmNotFoundException("Unknown search criteria");
                 }
@@ -213,7 +214,8 @@ public class FilmDbStorage implements FilmStorage {
         }
     }
 
-    private Film makeFilm(ResultSet rs, int rowNum) throws SQLException {
+    @Override
+    public Film mapRow(ResultSet rs, int rowNum) throws SQLException {
         var film = Film.builder()
                 .id(rs.getLong("film_id"))
                 .name(rs.getString("name"))
