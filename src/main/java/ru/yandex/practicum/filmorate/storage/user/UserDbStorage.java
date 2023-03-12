@@ -105,7 +105,7 @@ public class UserDbStorage implements UserStorage, RowMapper<User> {
     public List<Film> getRecommendedFilmsByUserId(long userId) {
         Long recommendedUserId;
         try {
-            recommendedUserId = getRecommendedUserByLikes(userId);
+            recommendedUserId = getRecommendedUserIdByLikes(userId);
             } catch (EmptyResultDataAccessException e) {
             log.debug("Recommended user not found");
             return new ArrayList<>();
@@ -143,7 +143,7 @@ public class UserDbStorage implements UserStorage, RowMapper<User> {
         user.setFriends(users.isEmpty() ? new HashSet<>() : new HashSet<>(users));
     }
 
-    private Long getRecommendedUserByLikes(long userId) {
+    private Long getRecommendedUserIdByLikes(long userId) {
         var parameterSource = new MapSqlParameterSource("userId", userId);
         String sqlForFindRecommendedUser = "SELECT user_id FROM likes l WHERE film_id IN " +
                 "(SELECT film_id FROM likes WHERE user_id = :userId) AND l.user_id != :userId " +
