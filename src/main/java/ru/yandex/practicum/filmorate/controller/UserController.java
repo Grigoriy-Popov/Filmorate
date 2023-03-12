@@ -80,7 +80,7 @@ public class UserController {
         return eventService.getEventsByUserId(userId);
     }
 
-    @GetMapping("/{id}/recommendations`")
+    @GetMapping("/{id}/recommendations")
     public List<Film> getRecommendedFilmsByUserId(@PathVariable("id") long userId) {
         log.info("Hit endpoint: get recommended films to user - {}", userId);
         return userService.getRecommendedFilmsByUserId(userId);
