@@ -30,8 +30,7 @@ public class ReviewServiceImpl implements ReviewService {
         checkExistenceById(review.getReviewId());
         userService.checkExistenceById(review.getUserId());
         filmService.checkExistenceById(review.getFilmId());
-        reviewStorage.editReview(review);
-        return getReviewById(review.getReviewId());
+        return reviewStorage.editReview(review);
     }
 
     @Override

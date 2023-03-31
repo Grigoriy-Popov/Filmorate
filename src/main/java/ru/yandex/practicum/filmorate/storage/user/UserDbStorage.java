@@ -106,7 +106,7 @@ public class UserDbStorage implements UserStorage, RowMapper<User> {
         Long recommendedUserId;
         try {
             recommendedUserId = getRecommendedUserIdByLikes(userId);
-            } catch (EmptyResultDataAccessException e) {
+        } catch (EmptyResultDataAccessException e) {
             log.debug("Recommended user not found");
             return new ArrayList<>();
         }
@@ -150,7 +150,7 @@ public class UserDbStorage implements UserStorage, RowMapper<User> {
                 "GROUP BY user_id " +
                 "ORDER BY COUNT(film_id) DESC " +
                 "LIMIT 1";
-        return namedParameterJdbcTemplate.queryForObject(sqlForFindRecommendedUser,
-                parameterSource, (rs, rowNum) -> rs.getLong("user_id"));
+        return namedParameterJdbcTemplate.queryForObject(sqlForFindRecommendedUser, parameterSource,
+                (rs, rowNum) -> rs.getLong("user_id"));
     }
 }
