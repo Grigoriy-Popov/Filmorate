@@ -18,6 +18,4 @@ public @interface AfterCinemaBirthday {
     Class<?>[] groups() default { };
 
     Class<? extends Payload>[] payload() default { };
-
-    String date() default "{0001-01-01}";
 }

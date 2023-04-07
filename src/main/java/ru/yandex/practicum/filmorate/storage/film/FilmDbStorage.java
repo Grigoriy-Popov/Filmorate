@@ -103,7 +103,7 @@ public class FilmDbStorage implements FilmStorage, RowMapper<Film> {
             sql = "SELECT * FROM films f " +
                     "JOIN mpa_rating m ON f.mpa_id = m.mpa_id " +
                     "LEFT JOIN likes l ON f.film_id = l.film_id " +
-                    "GROUP BY f.film_id " +
+                    "GROUP BY f.film_id, l.user_id " +
                     "ORDER BY COUNT(l.user_id) DESC LIMIT ?";
             films = jdbcTemplate.query(sql, this::mapRow, limit);
         } else if (genre != null && year == null) {
@@ -112,7 +112,7 @@ public class FilmDbStorage implements FilmStorage, RowMapper<Film> {
                     "LEFT JOIN likes l ON f.film_id = l.film_id " +
                     "LEFT JOIN genre_film gf ON f.film_id = gf.film_id " +
                     "WHERE gf.genre_id = ? " +
-                    "GROUP BY f.film_id " +
+                    "GROUP BY f.film_id, l.user_id " +
                     "ORDER BY COUNT(l.user_id) DESC LIMIT ?";
             films = jdbcTemplate.query(sql, this::mapRow, genre, limit);
         } else if (genre == null && year != null) {
@@ -120,7 +120,7 @@ public class FilmDbStorage implements FilmStorage, RowMapper<Film> {
                     "JOIN mpa_rating m ON f.mpa_id = m.mpa_id " +
                     "LEFT JOIN likes l ON f.film_id = l.film_id " +
                     "WHERE EXTRACT(YEAR FROM f.release_date::DATE) = ? " +
-                    "GROUP BY f.film_id " +
+                    "GROUP BY f.film_id, l.user_id " +
                     "ORDER BY COUNT(l.user_id) DESC LIMIT ?";
             films = jdbcTemplate.query(sql, this::mapRow, year, limit);
         } else {
@@ -129,7 +129,7 @@ public class FilmDbStorage implements FilmStorage, RowMapper<Film> {
                     "LEFT JOIN likes l ON f.film_id = l.film_id " +
                     "LEFT JOIN genre_film gf ON f.film_id = gf.film_id " +
                     "WHERE gf.genre_id = ? AND EXTRACT(YEAR FROM f.release_date::DATE) = ? " +
-                    "GROUP BY f.film_id " +
+                    "GROUP BY f.film_id, l.user_id " +
                     "ORDER BY COUNT(l.user_id) DESC LIMIT ?";
             films = jdbcTemplate.query(sql, this::mapRow, genre, year, limit);
         }
