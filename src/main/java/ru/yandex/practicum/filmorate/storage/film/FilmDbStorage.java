@@ -230,7 +230,7 @@ public class FilmDbStorage implements FilmStorage, RowMapper<Film> {
 
     private void setGenresAndLikesAndDirectors(Film film) {
         setGenres(film);
-        setLikes(film);
+        setRating(film);
         setDirectors(film);
     }
 
@@ -242,10 +242,11 @@ public class FilmDbStorage implements FilmStorage, RowMapper<Film> {
         film.setGenres(genres.isEmpty() ? new HashSet<>() : new HashSet<>(genres));
     }
 
-    private void setLikes(Film film) {
+    private void setRating(Film film) {
         String sql = "SELECT user_id FROM likes WHERE film_id = ?";
         List<Long> likes = jdbcTemplate.query(sql, (rs, rowNum) -> rs.getLong("user_id"), film.getId());
-        film.setUsersLikes(likes.isEmpty() ? new HashSet<>() : new HashSet<>(likes));
+//        film.setUsersLikes(likes.isEmpty() ? new HashSet<>() : new HashSet<>(likes));
+//        film.setRating();
     }
 
     private void setDirectors(Film film) {

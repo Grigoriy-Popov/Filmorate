@@ -49,11 +49,11 @@ public class FilmController {
         return filmService.getPopularFilms(limit, genreId, year);
     }
 
-    @PutMapping("{id}/like/{userId}")
-    public void addLikeToFilm(@PathVariable("id") long filmId,
-                              @PathVariable long userId) {
-        log.info("Hit endpoint: add like to film with id - {}, from user with id - {}", filmId, userId);
-        filmService.addLike(filmId, userId);
+    @PutMapping("{id}/mark/{userId}")
+    public void addMarkToFilm(@PathVariable("id") long filmId,
+                              @PathVariable long userId, @RequestParam int mark) {
+        log.info("Hit endpoint: add mark - {} to film with id - {}, from user with id - {}", mark, filmId, userId);
+        filmService.addMark(filmId, userId, mark);
     }
 
     @DeleteMapping("{id}/like/{userId}")

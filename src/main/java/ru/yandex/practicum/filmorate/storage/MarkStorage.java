@@ -12,11 +12,11 @@ import java.time.Instant;
 
 @Repository
 @RequiredArgsConstructor
-public class LikeStorage {
+public class MarkStorage {
     private final JdbcTemplate jdbcTemplate;
     private final EventStorage eventStorage;
 
-    public void addLike(long filmId, long userId) {
+    public void addMark(long filmId, long userId, int mark) {
         String sql = "INSERT INTO likes (user_id, film_id) VALUES (?, ?)";
         jdbcTemplate.update(sql, userId, filmId);
 

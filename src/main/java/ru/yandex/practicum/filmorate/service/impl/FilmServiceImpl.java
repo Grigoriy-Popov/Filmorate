@@ -7,7 +7,7 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.DirectorService;
 import ru.yandex.practicum.filmorate.service.FilmService;
 import ru.yandex.practicum.filmorate.service.UserService;
-import ru.yandex.practicum.filmorate.storage.LikeStorage;
+import ru.yandex.practicum.filmorate.storage.MarkStorage;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 
 import java.util.List;
@@ -16,7 +16,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class FilmServiceImpl implements FilmService {
     private final FilmStorage filmStorage;
-    private final LikeStorage likeStorage;
+    private final MarkStorage likeStorage;
     private final UserService userService;
     private final DirectorService directorService;
 
@@ -50,10 +50,10 @@ public class FilmServiceImpl implements FilmService {
     }
 
     @Override
-    public void addLike(long filmId, long userId) {
+    public void addMark(long filmId, long userId, int mark) {
         checkExistenceById(filmId);
         userService.checkExistenceById(userId);
-        likeStorage.addLike(filmId, userId);
+        likeStorage.addMark(filmId, userId, mark);
     }
 
     @Override

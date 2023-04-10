@@ -33,7 +33,7 @@ public class Film {
     @Positive(message = "Duration can't be negative")
     private Integer duration;
 
-    private Set<Long> usersLikes;
+    private Double rating;
 
     private Set<Genre> genres;
 

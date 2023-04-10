@@ -1,5 +1,5 @@
 DROP TABLE IF EXISTS director_film,directors,reviews,
-    friends,genre_film,genres,likes,films,mpa_rating,users,review_likes,events;
+    friends,genre_film,genres,likes,films,mpa_rating,users,review_likes,events, marks;
 
 CREATE TABLE IF NOT EXISTS mpa_rating
 (
@@ -14,7 +14,8 @@ CREATE TABLE IF NOT EXISTS films
     description  VARCHAR,
     release_date DATE,
     duration     INTEGER,
-    mpa_id       INTEGER REFERENCES mpa_rating (mpa_id) ON DELETE CASCADE ON UPDATE CASCADE
+    mpa_id       INTEGER REFERENCES mpa_rating (mpa_id) ON DELETE CASCADE ON UPDATE CASCADE,
+    rating       DOUBLE
 );
 
 CREATE TABLE IF NOT EXISTS genres
@@ -88,4 +89,11 @@ CREATE TABLE IF NOT EXISTS events
     event_type VARCHAR(30) NOT NULL,
     operation  VARCHAR(30) NOT NULL,
     entity_id  BIGINT      NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS marks
+(
+    user_id BIGINT REFERENCES users (user_id) ON DELETE CASCADE ON UPDATE CASCADE,
+    film_id BIGINT REFERENCES films (film_id) ON DELETE CASCADE ON UPDATE CASCADE,
+    mark    DOUBLE
 );
