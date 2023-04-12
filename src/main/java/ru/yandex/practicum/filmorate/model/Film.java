@@ -33,14 +33,14 @@ public class Film {
     @Positive(message = "Duration can't be negative")
     private Integer duration;
 
-    private Double rating;
-
     private Set<Genre> genres;
 
     @NotNull(message = "Film can't be without mpa rating")
     private MpaRating mpa;
 
     private Set<Director> directors;
+
+    private Double rating;
 
     public Map<String, Object> toMap() {
         Map<String, Object> values = new HashMap<>();

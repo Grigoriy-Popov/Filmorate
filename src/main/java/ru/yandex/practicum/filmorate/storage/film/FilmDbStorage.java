@@ -223,6 +223,7 @@ public class FilmDbStorage implements FilmStorage, RowMapper<Film> {
                 .releaseDate(rs.getDate("release_Date").toLocalDate())
                 .duration(rs.getInt("duration"))
                 .mpa(new MpaRating(rs.getInt("mpa_id"), rs.getString("mpa_name")))
+                .rating(rs.getDouble("rating"))
                 .build();
         setGenresAndLikesAndDirectors(film);
         return film;

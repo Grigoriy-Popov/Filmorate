@@ -16,7 +16,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class FilmServiceImpl implements FilmService {
     private final FilmStorage filmStorage;
-    private final MarkStorage likeStorage;
+    private final MarkStorage markStorage;
     private final UserService userService;
     private final DirectorService directorService;
 
@@ -53,14 +53,15 @@ public class FilmServiceImpl implements FilmService {
     public void addMark(long filmId, long userId, int mark) {
         checkExistenceById(filmId);
         userService.checkExistenceById(userId);
-        likeStorage.addMark(filmId, userId, mark);
+        userService.checkExistenceById(userId);
+        markStorage.addMark(filmId, userId, mark);
     }
 
     @Override
     public void deleteLike(long filmId, long userId) {
         checkExistenceById(filmId);
         userService.checkExistenceById(userId);
-        likeStorage.deleteLike(filmId, userId);
+        markStorage.deleteMark(filmId, userId);
     }
 
     @Override

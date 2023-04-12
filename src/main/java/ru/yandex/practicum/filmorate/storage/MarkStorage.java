@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.storage;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.model.events.Event;
@@ -17,9 +18,19 @@ public class MarkStorage {
     private final EventStorage eventStorage;
 
     public void addMark(long filmId, long userId, int mark) {
-        String sql = "INSERT INTO likes (user_id, film_id) VALUES (?, ?)";
-        jdbcTemplate.update(sql, userId, filmId);
+        if (checkExistenceById(filmId, userId)) {
+            String sqlUpdateMark = "UPDATE marks SET mark = ? WHERE film_id = ? AND user_id = ?";
+            jdbcTemplate.update(sqlUpdateMark, mark, filmId, userId);
+        } else {
+            String sqlAddMark = "INSERT INTO marks (user_id, film_id, mark) VALUES (?, ?, ?)";
+            jdbcTemplate.update(sqlAddMark, userId, filmId, mark);
+        }
 
+        String sqlSetAvgMarkToFilm = "UPDATE films SET rating = (SELECT AVG(mark) FROM marks WHERE film_id = ?) " +
+                "WHERE film_id = ?";
+        jdbcTemplate.update(sqlSetAvgMarkToFilm, filmId, filmId);
+
+        //todo сделать что-то с евентами
         eventStorage.saveEvent(Event.builder()
                 .timestamp(Instant.now().toEpochMilli())
                 .userId(userId)
@@ -29,10 +40,11 @@ public class MarkStorage {
                 .build());
     }
 
-    public void deleteLike(long filmId, long userId) {
-        String sql = "DELETE FROM likes WHERE user_id = ? AND film_id = ? ";
+    public void deleteMark(long filmId, long userId) {
+        String sql = "DELETE FROM marks WHERE film_id = ? AND user_id = ?";
         jdbcTemplate.update(sql, userId, filmId);
 
+        //todo сделать что-то с евентами
         eventStorage.saveEvent(Event.builder()
                 .timestamp(Instant.now().toEpochMilli())
                 .userId(userId)
@@ -40,6 +52,16 @@ public class MarkStorage {
                 .operation(Operation.REMOVE)
                 .entityId(filmId)
                 .build());
+    }
+
+    public boolean checkExistenceById(long filmId, long userId) {
+        String sql = "SELECT mark FROM marks WHERE film_id = ? AND user_id = ?";
+        try {
+            jdbcTemplate.queryForObject(sql, Double.class, filmId, userId);
+        } catch (EmptyResultDataAccessException e) {
+            return false;
+        }
+        return true;
     }
 }
 
