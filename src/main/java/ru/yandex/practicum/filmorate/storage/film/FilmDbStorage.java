@@ -42,7 +42,7 @@ public class FilmDbStorage implements FilmStorage, RowMapper<Film> {
         if (film.getDirectors() != null) {
             film.getDirectors().forEach(director -> directorFilmStorage.addDirector(director.getId(), film.getId()));
         }
-        setGenresAndLikesAndDirectors(film);
+        setGenresAndDirectors(film);
         film.setMpa(mpaService.getMpaById(film.getMpa().getId()));
         return film;
     }
@@ -61,7 +61,7 @@ public class FilmDbStorage implements FilmStorage, RowMapper<Film> {
         if (film.getDirectors() != null) {
             film.getDirectors().forEach(director -> directorFilmStorage.addDirector(director.getId(), film.getId()));
         }
-        setGenresAndLikesAndDirectors(film);
+        setGenresAndDirectors(film);
         film.setMpa(mpaService.getMpaById(film.getMpa().getId()));
         return film;
     }
@@ -139,9 +139,12 @@ public class FilmDbStorage implements FilmStorage, RowMapper<Film> {
     @Override
     public List<Film> getCommonFilms(long userId, long friendId) {
         String sql = "SELECT * FROM films f " +
-                "JOIN mpa_rating m ON f.mpa_id = m.mpa_id " +
-                "WHERE f.film_id IN (SELECT film_id FROM likes WHERE user_id = ? " +
-                "INTERSECT (SELECT film_id FROM likes WHERE user_id = ?))";
+                "JOIN mpa_rating mpa ON f.mpa_id = mpa.mpa_id " +
+                "WHERE f.film_id IN " +
+                "(SELECT m.film_id FROM marks m " +
+                "JOIN marks m2 ON m.film_id = m2.film_id " +
+                "WHERE m.mark = m2.mark " +
+                "AND m.user_id = ? AND m2.user_id = ?)";
         return jdbcTemplate.query(sql, this::mapRow, userId, friendId);
     }
 
@@ -198,7 +201,7 @@ public class FilmDbStorage implements FilmStorage, RowMapper<Film> {
             case 2:
                 if ((by[0].equals("director") && by[1].equals("title")) ||
                         (by[0].equals("title") && by[1].equals("director"))) {
-                    sql = "SELECT * FROM films f " +
+                     sql = "SELECT * FROM films f " +
                             "JOIN mpa_rating m ON f.mpa_id = m.mpa_id " +
                             "LEFT JOIN director_film df ON f.film_id = df.film_id " +
                             "LEFT JOIN directors d ON d.director_id = df.director_id " +
@@ -225,13 +228,12 @@ public class FilmDbStorage implements FilmStorage, RowMapper<Film> {
                 .mpa(new MpaRating(rs.getInt("mpa_id"), rs.getString("mpa_name")))
                 .rating(rs.getDouble("rating"))
                 .build();
-        setGenresAndLikesAndDirectors(film);
+        setGenresAndDirectors(film);
         return film;
     }
 
-    private void setGenresAndLikesAndDirectors(Film film) {
+    private void setGenresAndDirectors(Film film) {
         setGenres(film);
-        setRating(film);
         setDirectors(film);
     }
 
@@ -241,13 +243,6 @@ public class FilmDbStorage implements FilmStorage, RowMapper<Film> {
         List<Genre> genres = jdbcTemplate.query(sql, (rs, rowNum) ->
                 new Genre(rs.getInt("genre_id"), rs.getString("name")), film.getId());
         film.setGenres(genres.isEmpty() ? new HashSet<>() : new HashSet<>(genres));
-    }
-
-    private void setRating(Film film) {
-        String sql = "SELECT user_id FROM likes WHERE film_id = ?";
-        List<Long> likes = jdbcTemplate.query(sql, (rs, rowNum) -> rs.getLong("user_id"), film.getId());
-//        film.setUsersLikes(likes.isEmpty() ? new HashSet<>() : new HashSet<>(likes));
-//        film.setRating();
     }
 
     private void setDirectors(Film film) {

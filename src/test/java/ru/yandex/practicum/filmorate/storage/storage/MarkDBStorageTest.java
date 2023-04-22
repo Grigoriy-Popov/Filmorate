@@ -9,21 +9,22 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.MpaRating;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.storage.MarkStorage;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
+import ru.yandex.practicum.filmorate.storage.mark.MarkStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.time.LocalDate;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
 
 @Transactional
 @SpringBootTest(
         properties = "db.name=test",
         webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
-class MarkStorageTest {
+class MarkDBStorageTest {
     private final MarkStorage markStorage;
     private final FilmStorage filmStorage;
     private final UserStorage userStorage;
@@ -51,7 +52,7 @@ class MarkStorageTest {
         String sql = "SELECT mark FROM marks WHERE user_id = ? AND film_id = ?";
         Double mark = jdbcTemplate.queryForObject(sql, Double.class, filmFromDb1.getId(), userFromDb1.getId());
 
-        assertThat(mark, equalTo((double) 5));
+        assertThat(mark, is(equalTo(5.0)));
     }
 
     @Test
@@ -64,7 +65,7 @@ class MarkStorageTest {
         String sql = "SELECT mark FROM marks WHERE user_id = ? AND film_id = ?";
         Double mark = jdbcTemplate.queryForObject(sql, Double.class, filmFromDb1.getId(), userFromDb1.getId());
 
-        assertThat(mark, equalTo((double) 10));
+        assertThat(mark, is(equalTo(10.0)));
     }
 
     @Test
@@ -79,7 +80,10 @@ class MarkStorageTest {
         markStorage.addMark(filmFromDb1.getId(), userFromDb3.getId(), 1);
         Film filmFromDbWithRating = filmStorage.getFilmById(filmFromDb1.getId()).get();
 
-        assertThat(filmFromDbWithRating.getRating(), equalTo((double) (5 + 10 + 1) / 3));
+        Double filmRating = filmFromDbWithRating.getRating();
+        double expectedRating = (double) (5 + 10 + 1) / 3;
+
+        assertThat(filmRating, is(equalTo(expectedRating)));
     }
 
     @Test
@@ -91,7 +95,7 @@ class MarkStorageTest {
         markStorage.addMark(filmFromDb1.getId(), userFromDb1.getId(), 5);
         Film filmFromDbWithRating = filmStorage.getFilmById(filmFromDb1.getId()).get();
 
-        assertThat(filmFromDbWithRating.getRating(), equalTo((double) 5));
+        assertThat(filmFromDbWithRating.getRating(), is(equalTo(5.0)));
     }
 
 }

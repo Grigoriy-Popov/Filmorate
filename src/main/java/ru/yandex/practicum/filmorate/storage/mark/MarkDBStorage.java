@@ -1,4 +1,4 @@
-package ru.yandex.practicum.filmorate.storage;
+package ru.yandex.practicum.filmorate.storage.mark;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -13,10 +13,11 @@ import java.time.Instant;
 
 @Repository
 @RequiredArgsConstructor
-public class MarkStorage {
+public class MarkDBStorage implements MarkStorage {
     private final JdbcTemplate jdbcTemplate;
     private final EventStorage eventStorage;
 
+    @Override
     public void addMark(long filmId, long userId, int mark) {
         if (checkExistenceById(filmId, userId)) {
             String sqlUpdateMark = "UPDATE marks SET mark = ? WHERE film_id = ? AND user_id = ?";
@@ -40,6 +41,7 @@ public class MarkStorage {
                 .build());
     }
 
+    @Override
     public void deleteMark(long filmId, long userId) {
         String sql = "DELETE FROM marks WHERE film_id = ? AND user_id = ?";
         jdbcTemplate.update(sql, userId, filmId);
@@ -54,6 +56,7 @@ public class MarkStorage {
                 .build());
     }
 
+    @Override
     public boolean checkExistenceById(long filmId, long userId) {
         String sql = "SELECT mark FROM marks WHERE film_id = ? AND user_id = ?";
         try {
@@ -64,6 +67,3 @@ public class MarkStorage {
         return true;
     }
 }
-
-
-
