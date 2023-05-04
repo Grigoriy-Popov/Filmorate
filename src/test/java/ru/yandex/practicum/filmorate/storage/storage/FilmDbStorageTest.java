@@ -6,15 +6,20 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
+import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.MpaRating;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.storage.DirectorFilmStorage;
+import ru.yandex.practicum.filmorate.storage.director.DirectorStorage;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.mark.MarkStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -30,6 +35,8 @@ class FilmDbStorageTest {
     private final FilmStorage filmStorage;
     private final UserStorage userStorage;
     private final MarkStorage markStorage;
+    private final DirectorStorage directorStorage;
+    private final DirectorFilmStorage directorFilmStorage;
 
     User user1 = User.builder().email("ivan@mail.ru").login("Ivanio").name("Ivan")
             .birthday(LocalDate.of(2000, 1, 1)).build();
@@ -97,5 +104,31 @@ class FilmDbStorageTest {
         assertThat(commonFilms.get(0).getName(), is(equalTo(filmFromDb1.getName())));
         assertThat(commonFilms.get(1).getName(), is(equalTo(filmFromDb2.getName())));
         assertThat(commonFilms.get(2).getName(), is(equalTo(filmFromDb5.getName())));
+    }
+
+    @Test
+    void getAllFilmsOfDirector() {
+        Film filmFromDb1 = filmStorage.createFilm(film1);
+        Film filmFromDb2 = filmStorage.createFilm(film2);
+        Film filmFromDb3 = filmStorage.createFilm(film3);
+        Film filmFromDb4 = filmStorage.createFilm(film4);
+        Film filmFromDb5 = filmStorage.createFilm(film5);
+
+        var director1 = new Director(null, "director1");
+        var director2 = new Director(null, "director2");
+        var director3 = new Director(null, "director3");
+        var directorFromDb1 = directorStorage.createDirector(director1);
+        var directorFromDb2 = directorStorage.createDirector(director2);
+        var directorFromDb3 = directorStorage.createDirector(director3);
+        Set<Director> film1Directors = Set.of(directorFromDb1, directorFromDb2);
+        Set<Director> film2Directors = Set.of(directorFromDb2, directorFromDb3);
+        directorFilmStorage.addDirector(directorFromDb1.getId(), filmFromDb1.getId());
+        directorFilmStorage.addDirector(directorFromDb2.getId(), filmFromDb1.getId());
+        directorFilmStorage.addDirector(directorFromDb2.getId(), filmFromDb2.getId());
+        directorFilmStorage.addDirector(directorFromDb3.getId(), filmFromDb2.getId());
+        filmFromDb1.setDirectors(film1Directors);
+        filmFromDb2.setDirectors(film2Directors);
+
+
     }
 }

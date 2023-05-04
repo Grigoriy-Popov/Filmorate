@@ -157,18 +157,16 @@ public class FilmDbStorage implements FilmStorage, RowMapper<Film> {
     @Override
     public List<Film> getAllFilmsOfDirector(int directorId, String sortBy) {
         String sql;
-        if (sortBy.equals("likes")) {
+        if (sortBy.equals("rating")) {
             sql = "SELECT * FROM films f " +
                     "JOIN mpa_rating m ON f.mpa_id = m.mpa_id " +
-                    "LEFT JOIN likes l ON f.film_id = l.film_id " +
                     "LEFT JOIN director_film df ON f.film_id = df.film_id " +
                     "WHERE df.director_id = ? " +
                     "GROUP BY f.film_id " +
-                    "ORDER BY COUNT(l.user_id) DESC";
+                    "ORDER BY f.rating DESC";
         } else if (sortBy.equals("year")) {
             sql = "SELECT * FROM films f " +
                     "JOIN mpa_rating m ON f.mpa_id = m.mpa_id " +
-                    "LEFT JOIN likes l ON f.film_id = l.film_id " +
                     "LEFT JOIN director_film df ON f.film_id = df.film_id " +
                     "WHERE df.director_id = ? " +
                     "GROUP BY f.film_id " +
