@@ -129,6 +129,5 @@ class FilmDbStorageTest {
         filmFromDb1.setDirectors(film1Directors);
         filmFromDb2.setDirectors(film2Directors);
 
-
     }
 }
